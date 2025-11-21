@@ -1,2 +1,4 @@
-# standard-data-management-framework
-A modular, scalable, and Python-based Data Management Framework designed to streamline ingestion, validation, transformation, lineage tracking, and governance for enterprise-grade data workflows. This framework provides standardized patterns and reusable components that allow teams to build reliable data pipelines faster and with fewer errors.
+# Standard Data Management Framework
+
+A modular, scalable, and Python-based Data Management Framework designed to standardize ingestion, validation, transformation, metadata handling, and storage across enterprise data workflows.
+This framework eliminates repetitive boilerplate and provides a consistent structure for building reliable, maintainable data pipelines.
