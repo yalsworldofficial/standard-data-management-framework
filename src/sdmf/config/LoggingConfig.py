@@ -1,8 +1,7 @@
 # logging.py
 import logging
 import sys
-from datetime import datetime, UTC
-from sdmf.config import LoggingPrettyFormatter
+from sdmf.config.LoggingPrettyFormatter import LoggingPrettyFormatter
 
 
 

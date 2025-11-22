@@ -1,4 +1,4 @@
-from sdmf.core.BasePipelineException import BasePipelineException
+from sdmf.exception.BasePipelineException import BasePipelineException
 
 class KeyVaultSecretFetchError(BasePipelineException):
     def __init__(self, message=None, details=None, original_exception=None):
