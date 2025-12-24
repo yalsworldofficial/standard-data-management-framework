@@ -45,5 +45,20 @@
         }
     ],
     "comprehensive_checks": [
+        {
+            "check_name":"",
+            "query":"Select * from uc_name.schema_name.some_table_name where col_1 IS NULL;",
+            "severity":"ERROR",
+            "threshold": 0,
+            "load_stage":"PRE_LOAD"
+        },
+        {
+            "check_name":"",
+            "query":"Select * from uc_name.schema_name.some_table_name where col_1 > 5;",
+            "severity":"WARNING",
+            "threshold": 0,
+            "load_stage":"POST_LOAD",
+            "dependency_dataset":["uc_name.schema_name.some_table_name1", "uc_name.schema_name.some_table_name2"]
+        }
     ]
 }
