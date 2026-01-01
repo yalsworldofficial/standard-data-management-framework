@@ -1,5 +1,4 @@
 import logging
-from sdmf.data_quality.FeedSpec import FeedSpec
 logger = logging.getLogger(__name__)
 
 
@@ -9,7 +8,7 @@ class ComprehensiveDQExecutor:
     def __init__(self, spark):
         self.spark = spark
 
-    def run_pre_load(self, feed_spec: FeedSpec):
+    def run_pre_load(self, feed_spec: dict):
         warnings = []
         has_errors = False
         executed_checks = 0

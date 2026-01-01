@@ -1,5 +1,3 @@
-# sdmf/data_quality/runner/data_quality_runner.py
-
 import logging
 from pyspark.sql import SparkSession
 from sdmf.data_quality.executors.StandardDQExecutor import StandardDQExecutor
@@ -8,7 +6,7 @@ from sdmf.data_quality.executors.ComprehensiveDQExecutor import ComprehensiveDQE
 logger = logging.getLogger(__name__)
 
 
-class DataQualityRunner:
+class FeedDataQualityRunner:
     """
     Orchestrates full data quality lifecycle.
     """
