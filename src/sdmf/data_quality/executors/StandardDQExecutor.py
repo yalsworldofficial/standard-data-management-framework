@@ -8,9 +8,8 @@ logger = logging.getLogger(__name__)
 class StandardDQExecutor:
     """
     Standalone standard data quality checks.
-    Each check returns True (pass) or False (fail).
+    All checks return a uniform result structure.
     """
-
 
     DEFAULT_PARAMS = {
         "threshold": 0.0,
@@ -20,7 +19,6 @@ class StandardDQExecutor:
 
     def __init__(self, spark):
         self.spark = spark
-
 
     # ------------------------------------------------------------------
     # Public API
@@ -32,21 +30,18 @@ class StandardDQExecutor:
         column=None,
         total_count: int = 0,
         **params,
-    ) -> bool:
+    ) -> dict:
         """
         Executes a single standard DQ check.
+        Returns a uniform result dictionary.
         """
 
         if not hasattr(self, method_name):
             raise AttributeError(f"Unsupported check method: {method_name}")
 
-        # Merge defaults
         final_params = {**self.DEFAULT_PARAMS, **params}
-
-        # Validate parameters
         self._validate_parameters(final_params)
 
-        # Resolve method
         method = getattr(self, method_name)
 
         logger.info(
@@ -55,19 +50,35 @@ class StandardDQExecutor:
             self._format_context(method_name, final_params),
         )
 
-        result = method(
+        bad_count = method(
             df=df,
             column=column,
             total_count=total_count,
             **final_params,
         )
 
-        if result:
-            logger.info("✅ %s PASSED", method_name)
-        else:
-            logger.error("❌ %s FAILED", method_name)
+        threshold = final_params.get("threshold")
+        passed = self._is_within_threshold(bad_count, total_count, threshold)
 
-        return bool(result)
+        result = {
+            "check_name": method_name,
+            "column": column,
+            "passed": passed,
+            "bad_count": bad_count,
+            "total_count": total_count,
+            "failure_ratio": (
+                bad_count / total_count if total_count > 0 else 0.0
+            ),
+            "threshold": threshold,
+            "details": {},
+        }
+
+        if passed:
+            logger.info("%s PASSED | %s", method_name, result)
+        else:
+            logger.error("%s FAILED | %s", method_name, result)
+
+        return result
 
     # ------------------------------------------------------------------
     # Parameter Validation
@@ -83,7 +94,7 @@ class StandardDQExecutor:
             raise ValueError("Range bounds must be numeric.")
 
     # ------------------------------------------------------------------
-    # Contextual Logging
+    # Logging Helpers
     # ------------------------------------------------------------------
     @staticmethod
     def _format_context(method_name: str, params: dict) -> str:
@@ -101,34 +112,27 @@ class StandardDQExecutor:
     # Shared Helper
     # ------------------------------------------------------------------
     @staticmethod
-    def _is_within_threshold(
-        bad_count: int, total_count: int, threshold: float
-    ) -> bool:
+    def _is_within_threshold(bad_count, total_count, threshold) -> bool:
         return total_count == 0 or (bad_count / total_count) <= threshold
 
     # ------------------------------------------------------------------
-    # CHECK FUNCTIONS (Business Logic Only)
+    # CHECK FUNCTIONS
+    # Each check RETURNS bad_count (int)
     # ------------------------------------------------------------------
-    def _check_nulls(self, df, column, total_count, threshold, **_):
-        bad = df.filter(F.col(column).isNull()).count()
-        return self._is_within_threshold(bad, total_count, threshold)
+    def _check_nulls(self, df, column, total_count, **_):
+        return df.filter(F.col(column).isNull()).count()
 
-    def _check_value_range(self, df, column, total_count, threshold, range, **_):
-        bad = df.filter(
+    def _check_value_range(self, df, column, total_count, range, **_):
+        return df.filter(
             (F.col(column) < range["min"]) | (F.col(column) > range["max"])
         ).count()
-        return self._is_within_threshold(bad, total_count, threshold)
 
-    def _check_allowed_values(
-        self, df, column, total_count, threshold, allowed_values, **_
-    ):
-        bad = df.filter(~F.col(column).isin(allowed_values)).count()
-        return self._is_within_threshold(bad, total_count, threshold)
+    def _check_allowed_values(self, df, column, total_count, allowed_values, **_):
+        return df.filter(~F.col(column).isin(allowed_values)).count()
 
-    def _check_duplicates(self, df, column=None, total_count=0, threshold=0.0, **_):
+    def _check_duplicates(self, df, column=None, total_count=0, **_):
         cols = [column] if column else df.columns
-        dup = df.groupBy(cols).count().filter(F.col("count") > 1).count()
-        return self._is_within_threshold(dup, total_count, threshold)
+        return df.groupBy(cols).count().filter(F.col("count") > 1).count()
 
     def _check_composite_key(self, df, column, total_count, **_):
         cols = column if isinstance(column, list) else [column]
@@ -139,7 +143,7 @@ class StandardDQExecutor:
 
         dups = df.groupBy(cols).count().filter(F.col("count") > 1).count()
 
-        return nulls == 0 and dups == 0
+        return nulls + dups
 
     def _check_primary_key(self, df, column, total_count, **_):
         cols = [column] if isinstance(column, str) else column
@@ -150,4 +154,4 @@ class StandardDQExecutor:
 
         dups = df.groupBy(cols).count().filter(F.col("count") > 1).count()
 
-        return nulls == 0 and dups == 0
+        return nulls + dups

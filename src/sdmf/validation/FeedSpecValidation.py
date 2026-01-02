@@ -26,7 +26,7 @@ class FeedSpecValidation:
             ("Rule 3: composite_key", self._rule_3_composite_key),
             ("Rule 4: partition_keys", self._rule_4_partition_keys),
             ("Rule 5: vacuum_hours", self._rule_5_vacuum_hours),
-            ("Rule 6: checks list", self._rule_6_checks_list),
+            ("Rule 6: standard checks list", self._rule_6_checks_list),
             ("Rule 7: checks structure", self._rule_7_checks_structure),
         ]
 
@@ -116,16 +116,16 @@ class FeedSpecValidation:
             raise FeedSpecValidationError(message="'vacuum_hours' must be an integer")
 
     def _rule_6_checks_list(self):
-        if "checks" not in self.data:
+        if "standard_checks" not in self.data:
             raise FeedSpecValidationError(message="Missing 'checks'")
 
-        if not isinstance(self.data["checks"], list):
-            raise FeedSpecValidationError(message="'checks' must be a list")
+        if not isinstance(self.data["standard_checks"], list):
+            raise FeedSpecValidationError(message="'standard_checks' must be a list")
 
     def _rule_7_checks_structure(self):
         required_fields = ["check_sequence", "column_name", "threshold"]
 
-        for idx, check in enumerate(self.data["checks"]):
+        for idx, check in enumerate(self.data["standard_checks"]):
             if not isinstance(check, dict):
                 raise FeedSpecValidationError(
                     message=f"checks[{idx}] must be an object"

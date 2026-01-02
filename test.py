@@ -1,4 +1,4 @@
-{
+my_json = """{
     "primary_key": "alpha3-b",
     "composite_key": [],
     "partition_keys": [],
@@ -43,7 +43,7 @@
                 "_check_nulls",
                 "_check_duplicates"
             ],
-            "column_name": "english",
+            "column_name": "English Name",
             "threshold": 0
         }
     ],
@@ -65,4 +65,10 @@
             "dependency_dataset":["uc_name.schema_name.some_table_name1", "uc_name.schema_name.some_table_name2"]
         }
     ]
-}
+}"""
+
+
+
+
+
+i
