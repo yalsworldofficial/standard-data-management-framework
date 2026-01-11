@@ -26,16 +26,13 @@ class FeedDataQualityRunner:
     # --------------------------------------------------
     # ENTRY POINT
     # --------------------------------------------------
-    def run(self):
+    def _run(self):
         logger.info("Starting Data Quality Runner")
 
         passed_feeds = []
 
-        # ---------------------------
-        # PRE LOAD
-        # ---------------------------
         for feed in self.feed_specs:
-            result = self._run_pre_load(feed)
+            result = self._run_standard_checks(feed)
             self.results.append(result)
 
             if result["standard_checks_passed"]:
@@ -45,18 +42,17 @@ class FeedDataQualityRunner:
 
         if can_ingest:
             # self._trigger_ingestion(passed_feeds)
-            self._run_post_load(passed_feeds)
+            self._run_comprehensive_checks(passed_feeds)
 
-        self._finalize()
 
-        self._generate_report()
+        # self._generate_report()
 
     # --------------------------------------------------
     # PRE LOAD
     # --------------------------------------------------
-    def _run_pre_load(self, feed: dict) -> dict:
+    def _run_standard_checks(self, feed: dict) -> dict:
         table = feed["source_table_name"]
-        logger.info("PRE_LOAD checks for %s", table)
+        logger.info("Standard checks for %s", table)
 
         df = self.spark.table(table)
         total_count = df.count()
@@ -90,7 +86,7 @@ class FeedDataQualityRunner:
     # --------------------------------------------------
     # POST LOAD
     # --------------------------------------------------
-    def _run_post_load(self, tables: list[str]):
+    def _run_comprehensive_checks(self, tables: list[str]):
         for feed in self.feed_specs:
             if feed["source_table_name"] not in tables:
                 continue

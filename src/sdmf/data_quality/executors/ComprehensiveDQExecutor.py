@@ -19,9 +19,9 @@ class ComprehensiveDQExecutor:
 
         for check in feed_spec.get("comprehensive_checks", []):
             if check.get("load_stage") != "PRE_LOAD":
-                logger.info(
-                    "Skipping POST_LOAD check: %s", check.get("query")
-                )
+                # logger.info(
+                #     "Skipping POST_LOAD check: %s", check.get("check_name")
+                # )
                 continue
 
 
@@ -36,7 +36,7 @@ class ComprehensiveDQExecutor:
             severity = check.get("severity", "").upper()
             threshold = check.get("threshold", 0)
 
-            logger.info("Executing PRE_LOAD check")
+            logger.info(f"Executing PRE_LOAD check {check.get("check_name")} on {feed_spec.get("source_table_name")}")
 
             df = self.spark.sql(query)
             count = df.count()

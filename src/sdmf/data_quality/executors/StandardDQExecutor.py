@@ -45,9 +45,10 @@ class StandardDQExecutor:
         method = getattr(self, method_name)
 
         logger.info(
-            "Executing %s | %s",
+            "Executing %s with %s on %s",
             method_name,
             self._format_context(method_name, final_params),
+            column
         )
 
         bad_count = method(
@@ -57,7 +58,7 @@ class StandardDQExecutor:
             **final_params,
         )
 
-        threshold = final_params.get("threshold")
+        threshold = final_params.get("threshold", 0.0)
         passed = self._is_within_threshold(bad_count, total_count, threshold)
 
         result = {
@@ -66,17 +67,20 @@ class StandardDQExecutor:
             "passed": passed,
             "bad_count": bad_count,
             "total_count": total_count,
+            "failure_percentage": (
+                (float(bad_count) / float(total_count))*float(100) if total_count > 0 else 0.0
+            ),
             "failure_ratio": (
-                bad_count / total_count if total_count > 0 else 0.0
+                float(bad_count) / float(total_count) if total_count > 0 else 0.0
             ),
             "threshold": threshold,
-            "details": {},
+            "threshold_percentage": float(threshold)*float(100),
         }
 
         if passed:
-            logger.info("%s PASSED | %s", method_name, result)
+            logger.info("%s PASSED on %s", method_name, column)
         else:
-            logger.error("%s FAILED | %s", method_name, result)
+            logger.error("%s FAILED on %s", method_name, column)
 
         return result
 
