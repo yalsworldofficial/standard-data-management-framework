@@ -4,7 +4,7 @@ from sdmf.validation.ValidationContext import ValidationContext
 from sdmf.exception.ValidationError import ValidationError
 
 class ValidateMasterSpecs(ValidationRule):
-    name = "Master Spec Check"
+    name = "Master spec check"
 
     def validate(self, context: ValidationContext):
         master_specs = os.path.join(context.file_hunt_path, "master_specs.xlsx")

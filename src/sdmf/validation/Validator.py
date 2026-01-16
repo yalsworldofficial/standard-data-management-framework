@@ -1,5 +1,5 @@
 import logging
-from typing import List
+import pandas as pd
 from typing import Sequence
 from sdmf.validation.ValidationRule import ValidationRule
 from sdmf.validation.ValidationContext import ValidationContext
@@ -15,32 +15,51 @@ class Validator:
     def validate(self, context: ValidationContext) -> ValidationResult:
         errors = []
         passed = 0
+        rows = []
 
-        ctr = 1
-
-        for rule in self.rules:
+        for idx, rule in enumerate(self.rules, start=1):
             try:
                 rule.validate(context)
                 passed += 1
-                self.logger.info(f"Rule {ctr}: {rule.name} — PASSED")
+
+                self.logger.info(f"Rule {idx}: {rule.name} — PASSED")
+
+                rows.append({
+                    "rule_index": idx,
+                    "rule_name": rule.name,
+                    "status": "PASSED",
+                    "error_message": None
+                })
+
             except ValidationError as e:
                 e.rule_name = rule.name
                 errors.append(e)
-                # self.logger.error(f"Rule {ctr}: {rule.name} — FAILED: {e.message}")
+
+                self.logger.error(f"Rule {idx}: {rule.name} — FAILED: {e}")
+
+                rows.append({
+                    "rule_index": idx,
+                    "rule_name": rule.name,
+                    "status": "FAILED",
+                    "error_message": str(e)
+                })
 
                 if self.fail_fast:
                     break
-            ctr+=1
+
+        results_df = pd.DataFrame(rows)
 
         result = ValidationResult(
             passed=len(errors) == 0,
             passed_rules=passed,
             total_rules=len(self.rules),
-            errors=errors
+            errors=errors,
+            results_df=results_df
         )
 
         self._log_summary(result)
         return result
+
 
     def _log_summary(self, result: ValidationResult):
         if result.passed:

@@ -59,3 +59,6 @@ myOrchestrator = Orchestrator(
     spark,
     file_hunt_path="files/"
 )
+
+
+myOrchestrator.setup()

@@ -1,6 +1,7 @@
-from typing import Any
 from pyspark.sql import SparkSession
 import pandas as pd
+from sdmf.exception.ValidationError import ValidationError
+
 class ValidationContext:
     spark: SparkSession
     file_hunt_path: str
@@ -13,3 +14,24 @@ class ValidationContext:
 
     def get_master_specs(self) -> pd.DataFrame:
         return self.master_specs_dataframe
+    
+    def _get_table_columns(self, data: dict, rule_name: str) -> set:
+        if "source_table_name" not in data:
+            raise ValidationError(
+                message="Missing 'source_table_name'",
+                original_exception=None,
+                rule_name=rule_name
+            )
+
+        table_name = data["source_table_name"]
+
+        try:
+            df = self.spark.table(table_name)
+            return {field.name for field in df.schema.fields}
+        except Exception as e:
+            raise ValidationError(
+                message=f"Unable to read schema for table '{table_name}' ",
+                original_exception=None,
+                rule_name=rule_name
+            )
+

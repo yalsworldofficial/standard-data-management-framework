@@ -3,7 +3,7 @@ from sdmf.validation.ValidationContext import ValidationContext
 from sdmf.exception.ValidationError import ValidationError
 
 class PrimaryKey(ValidationRule):
-    name = "Feed spec Primary Key Check"
+    name = "Feed spec primary key check"
 
     def validate(self, context: ValidationContext):
         if context.mdf_feed_specs_array is None:
@@ -32,7 +32,7 @@ class PrimaryKey(ValidationRule):
                     rule_name=self.name
                 )
 
-            table_columns = self._get_table_columns(feed_specs_dict, context)
+            table_columns = context._get_table_columns(feed_specs_dict, self.name)
             if pk not in table_columns:
                 raise ValidationError(
                     message=f"primary_key '{pk}' not found in table '{feed_specs_dict['source_table_name']}' for feed id {json_dict['feed_id']}",
@@ -41,23 +41,4 @@ class PrimaryKey(ValidationRule):
                 )
         
 
-    def _get_table_columns(self, data: dict, context: ValidationContext) -> set:
-        if "source_table_name" not in data:
-            raise ValidationError(
-                message="Missing 'source_table_name'",
-                original_exception=None,
-                rule_name=self.name
-            )
-
-        table_name = data["source_table_name"]
-
-        try:
-            df = context.spark.table(table_name)
-            return {field.name for field in df.schema.fields}
-        except Exception as e:
-            raise ValidationError(
-                message=f"Unable to read schema for table '{table_name}' ",
-                original_exception=None,
-                rule_name=self.name
-            )
 
