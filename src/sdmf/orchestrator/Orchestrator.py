@@ -4,9 +4,16 @@ import logging
 from sdmf.exception.SystemError import SystemError
 from sdmf.validation.old.FeedSpecValidation import FeedSpecValidation
 from sdmf.data_quality.runner.FeedDataQualityRunner import FeedDataQualityRunner
-from sdmf.validation.ValidationContext import ValidationContext
-from sdmf.validation.validation_rules.ValidateMasterSpecs import ValidateMasterSpecs
+
 from sdmf.validation.Validator import Validator
+from sdmf.validation.ValidationContext import ValidationContext
+
+from sdmf.validation.validation_rules.ValidateMasterSpecs import ValidateMasterSpecs
+from sdmf.validation.validation_rules.EnforceMasterSpecsStructure import EnforceMasterSpecsStructure
+from sdmf.validation.validation_rules.ValidateFeedSpecsJSON import ValidateFeedSpecsJSON
+from sdmf.validation.validation_rules.PrimaryKey import PrimaryKey
+
+
 from datetime import datetime, timezone
 
 
@@ -16,21 +23,20 @@ class Orchestrator():
         self.logger = logging.getLogger(__name__)
         self.spark = spark
         self.file_hunt_path = file_hunt_path
+
         context = ValidationContext(
             spark=spark,
             file_hunt_path = file_hunt_path
         )
         rules = [
-            ValidateMasterSpecs()
+            ValidateMasterSpecs(),
+            EnforceMasterSpecsStructure(),
+            ValidateFeedSpecsJSON(),
+            PrimaryKey()
         ]
 
         validator = Validator(rules, fail_fast=True)
-        result = validator.validate(context)
-
-    
-
-    def load_master_spec_file(self):
-        pass
+        validator.validate(context)
 
 
     def run(self):

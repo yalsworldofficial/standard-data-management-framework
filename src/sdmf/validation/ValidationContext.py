@@ -1,11 +1,12 @@
 from typing import Any
 from pyspark.sql import SparkSession
-
+import pandas as pd
 class ValidationContext:
-    raw_json: str
-    file_hunt_path: str
-    data: dict[str, Any] | None
     spark: SparkSession
+    file_hunt_path: str
+    raw_json: str
+    master_specs_dataframe: pd.DataFrame
+    mdf_feed_specs_array: list[dict] | None
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)

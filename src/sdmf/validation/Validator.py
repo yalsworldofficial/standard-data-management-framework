@@ -26,7 +26,7 @@ class Validator:
             except ValidationError as e:
                 e.rule_name = rule.name
                 errors.append(e)
-                self.logger.error(f"Rule {ctr}: {rule.name} — FAILED: {e.message}")
+                # self.logger.error(f"Rule {ctr}: {rule.name} — FAILED: {e.message}")
 
                 if self.fail_fast:
                     break
@@ -45,11 +45,11 @@ class Validator:
     def _log_summary(self, result: ValidationResult):
         if result.passed:
             self.logger.info(
-                f"VALIDATION SUCCESS: {result.passed_rules}/{result.total_rules} "
-                f"({result.score:.2f}%)"
+                f"SYSTEM VALIDATION SUCCESS: {result.passed_rules}/{result.total_rules} "
+                f"INTEGRITY ({result.score:.2f}%)"
             )
         else:
             self.logger.error(
-                f"VALIDATION FAILED: {result.passed_rules}/{result.total_rules} "
-                f"({result.score:.2f}%)"
+                f"SYSTEM VALIDATION FAILED: {result.passed_rules}/{result.total_rules} "
+                f"INTEGRITY ({result.score:.2f}%)"
             )
