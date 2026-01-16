@@ -12,7 +12,10 @@ from sdmf.validation.validation_rules.ValidateMasterSpecs import ValidateMasterS
 from sdmf.validation.validation_rules.EnforceMasterSpecsStructure import EnforceMasterSpecsStructure
 from sdmf.validation.validation_rules.ValidateFeedSpecsJSON import ValidateFeedSpecsJSON
 from sdmf.validation.validation_rules.PrimaryKey import PrimaryKey
-
+from sdmf.validation.validation_rules.ColumnExistsInSelection import ColumnExistsInSelection
+from sdmf.validation.validation_rules.EnforceStandardChecks import EnforceStandardChecks
+from sdmf.validation.validation_rules.StandardCheckStructureCheck import StandardCheckStructureCheck
+from sdmf.validation.validation_rules.ComprehensiveChecksDependencyDatasetCheck import ComprehensiveChecksDependencyDatasetCheck
 
 from datetime import datetime, timezone
 
@@ -32,11 +35,17 @@ class Orchestrator():
             ValidateMasterSpecs(),
             EnforceMasterSpecsStructure(),
             ValidateFeedSpecsJSON(),
-            PrimaryKey()
+            PrimaryKey(),
+            ColumnExistsInSelection(),
+            EnforceStandardChecks(),
+            StandardCheckStructureCheck(),
+            ComprehensiveChecksDependencyDatasetCheck()
         ]
 
         validator = Validator(rules, fail_fast=True)
         validator.validate(context)
+
+        print(context.get_master_specs())
 
 
     def run(self):

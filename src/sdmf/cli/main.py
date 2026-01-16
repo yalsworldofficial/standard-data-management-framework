@@ -5,15 +5,15 @@ LoggingConfig().configure()
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import expr
 
-warehouse_dir = "file:///C:/tmp/spark-warehouse"
-os.makedirs("C:/tmp/spark-warehouse", exist_ok=True)
+# warehouse_dir = "file:///C:/tmp/spark-warehouse"
+# os.makedirs("C:/tmp/spark-warehouse", exist_ok=True)
 
 spark = (
     SparkSession.builder
     .appName("sdmf")
-    .config("spark.sql.warehouse.dir", warehouse_dir)
-    .config("spark.hadoop.io.native.lib.available", "false")
-    .config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem")
+    # .config("spark.sql.warehouse.dir", warehouse_dir)
+    # .config("spark.hadoop.io.native.lib.available", "false")
+    # .config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.LocalFileSystem")
     .enableHiveSupport()
     .getOrCreate()
 )

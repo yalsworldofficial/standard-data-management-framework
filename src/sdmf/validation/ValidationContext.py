@@ -10,3 +10,6 @@ class ValidationContext:
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
+
+    def get_master_specs(self) -> pd.DataFrame:
+        return self.master_specs_dataframe

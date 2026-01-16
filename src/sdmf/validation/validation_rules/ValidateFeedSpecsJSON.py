@@ -4,7 +4,7 @@ from sdmf.validation.ValidationContext import ValidationContext
 from sdmf.exception.ValidationError import ValidationError
 
 class ValidateFeedSpecsJSON(ValidationRule):
-    name = "JSON Format Check"
+    name = "Feed spec JSON Format Check"
 
     def validate(self, context: ValidationContext):
         context.mdf_feed_specs_array = context.master_specs_dataframe[["feed_id","feed_specs"]].to_dict(orient="records")
