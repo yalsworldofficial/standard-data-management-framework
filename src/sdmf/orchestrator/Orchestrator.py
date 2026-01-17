@@ -4,6 +4,7 @@ import uuid
 import configparser
 
 # external
+import pandas as pd
 from pyspark.sql import SparkSession
 
 # internal
@@ -55,7 +56,7 @@ class Orchestrator():
         )
         self.spark = spark
         self.file_hunt_path = file_hunt_path
-        self.system_run_report = []
+        self.system_run_report = pd.DataFrame()
         self.logger.info(f'Run ID: {self.run_id}')
 
     def log_spark_cluster_info(self, spark: SparkSession, logger):
@@ -104,7 +105,7 @@ class Orchestrator():
         my_SystemLaunchValidator = SystemLaunchValidator(file_hunt_path=self.file_hunt_path, spark=self.spark, config = self.config)
         validation_result = my_SystemLaunchValidator.run()
         self.validated_master_specs_df = my_SystemLaunchValidator.get_validated_master_specs()
-        self.system_run_report.append(validation_result.results_df)
+        self.system_run_report = validation_result.results_df
 
     def run(self):
         # perform data quality
@@ -129,7 +130,13 @@ class Orchestrator():
         # ingest valid feeds
         obj.adhoc_post_load()
         all_feed_manifest = obj._finalize()
-        my_ResultGenerator = ResultGenerator(all_feed_manifest, file_hunt_path=self.file_hunt_path, run_id=self.run_id, config=self.config)
+        my_ResultGenerator = ResultGenerator(
+            all_feed_manifest, 
+            file_hunt_path=self.file_hunt_path, 
+            run_id=self.run_id, 
+            config=self.config,
+            system_report = self.system_run_report
+        )
         my_ResultGenerator.run()
 
 

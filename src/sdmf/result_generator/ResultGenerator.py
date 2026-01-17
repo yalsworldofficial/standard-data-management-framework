@@ -15,7 +15,7 @@ from sdmf.exception.ResultGenerationException import ResultGenerationException
 
 class ResultGenerator():
 
-    def __init__(self, payload: list[dict], file_hunt_path: str, run_id: str, config: configparser.ConfigParser) -> None:
+    def __init__(self, payload: list[dict], file_hunt_path: str, run_id: str, config: configparser.ConfigParser, system_report: pd.DataFrame) -> None:
         self.payload = payload
         self.file_hunt_path = file_hunt_path
         self.run_id = run_id
@@ -39,6 +39,8 @@ class ResultGenerator():
             "comprehensive_post_load_passed",
             "can_ingest",
         ]
+
+        self.sheets.append(system_report)
 
     def run(self):
         try:
