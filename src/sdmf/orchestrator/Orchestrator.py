@@ -18,6 +18,7 @@ class Orchestrator():
     def  __init__(self, spark: SparkSession, file_hunt_path: str, config: configparser.ConfigParser) -> None:
         self.config = config
         self.logger = logging.getLogger(__name__)
+        self.run_id = uuid.uuid4().hex
         self.logger.info(
             f"""
             ============================================================
@@ -53,9 +54,9 @@ class Orchestrator():
             """
         )
         self.spark = spark
-        self.run_id = uuid.uuid4().hex
         self.file_hunt_path = file_hunt_path
         self.system_run_report = []
+        self.logger.info(f'Run ID: {self.run_id}')
 
     def log_spark_cluster_info(self, spark: SparkSession, logger):
         conf = spark.conf
