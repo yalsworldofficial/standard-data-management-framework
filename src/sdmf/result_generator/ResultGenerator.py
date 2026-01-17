@@ -40,7 +40,12 @@ class ResultGenerator():
             "can_ingest",
         ]
 
-        self.sheets.append(system_report)
+        self.sheets.append(
+            {
+                "sheet_name": "System Readiness",
+                "df":system_report
+            }
+        )
 
     def run(self):
         try:
