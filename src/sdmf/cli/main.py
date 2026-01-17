@@ -1,4 +1,4 @@
-import os
+import configparser
 from sdmf.config.LoggingConfig import LoggingConfig
 from sdmf.orchestrator.Orchestrator import Orchestrator
 LoggingConfig().configure()
@@ -43,7 +43,7 @@ df = (
 )
 
 
-df.show()
+# df.show()
 
 # Recreate table
 spark.sql("CREATE DATABASE IF NOT EXISTS demo")
@@ -54,11 +54,15 @@ df.write \
     .saveAsTable("demo.customers")
 
 
+cfg = configparser.ConfigParser()
+cfg.read("files_dev/config.ini")
+
 
 myOrchestrator = Orchestrator(
     spark,
-    file_hunt_path="files/"
+    file_hunt_path="files_dev/",
+    config=cfg
 )
 
 
-myOrchestrator.setup()
+myOrchestrator.run()

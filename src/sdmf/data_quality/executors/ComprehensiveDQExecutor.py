@@ -9,25 +9,16 @@ class ComprehensiveDQExecutor:
     def __init__(self, spark):
         self.spark = spark
 
-    def run_pre_load(self, feed_spec: dict) -> tuple:
+    def run(self, feed_spec: dict, is_post_load: bool = False) -> tuple:
         has_errors = False
-
-
         check_result = []
-
         logger.info("Running PRE_LOAD comprehensive DQ checks")
-
         for check in feed_spec.get("comprehensive_checks", []):
-            if check.get("load_stage") != "PRE_LOAD":
-                # logger.info(
-                #     "Skipping POST_LOAD check: %s", check.get("check_name")
-                # )
+            if is_post_load == True and check.get("load_stage") == "PRE_LOAD":
                 continue
-
-
+            if is_post_load == False and check.get("load_stage") == "POST_LOAD":
+                continue
             dependency_ds = check.get("dependency_dataset", [])
-
-
             for dds in dependency_ds:
                 if self.spark.catalog.tableExists(dds) == False:
                     raise DataQualityError

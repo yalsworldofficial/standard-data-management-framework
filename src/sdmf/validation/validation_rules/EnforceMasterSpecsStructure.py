@@ -8,7 +8,7 @@ class EnforceMasterSpecsStructure(ValidationRule):
     name = "Enforce master spec structure"
 
     def validate(self, context: ValidationContext):
-        master_specs_path = os.path.join(context.file_hunt_path, "master_specs.xlsx")
+        master_specs_path = os.path.join(context.file_hunt_path, context.master_spec_name)
 
         if os.path.exists(master_specs_path) == False:
             raise ValidationError(

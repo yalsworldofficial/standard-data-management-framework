@@ -5,6 +5,7 @@ __pycache__/
 spark-warehouse/
 metastore_db/
 spark_warehouse/
+sdmf_outbound/
 # C extensions
 *.so
 

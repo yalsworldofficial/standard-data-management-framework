@@ -2,7 +2,7 @@ from sdmf.validation.ValidationRule import ValidationRule
 from sdmf.validation.ValidationContext import ValidationContext
 from sdmf.exception.ValidationError import ValidationError
 
-class VacuumHoursRule(ValidationRule):
+class VacuumHoursCheck(ValidationRule):
     name = "Vacuum Hours Check"
 
     def validate(self, context: ValidationContext):

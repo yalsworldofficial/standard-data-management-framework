@@ -1,5 +1,6 @@
 # inbuilt
 import logging
+import configparser
 
 # external
 from pyspark.sql import SparkSession
@@ -18,16 +19,19 @@ from sdmf.validation.validation_rules.StandardCheckStructureCheck import Standar
 from sdmf.validation.validation_rules.ComprehensiveChecksDependencyDatasetCheck import ComprehensiveChecksDependencyDatasetCheck
 from sdmf.validation.validation_rules.PartitionKeysCheck import PartitionKeysCheck
 from sdmf.validation.validation_rules.CompositeKeysCheck import CompositeKeysCheck
+from sdmf.validation.validation_rules.VacuumHoursCheck import VacuumHoursCheck
 
 class SystemLaunchValidator():
 
-    def __init__(self, file_hunt_path: str, spark: SparkSession) -> None:
+    def __init__(self, file_hunt_path: str, spark: SparkSession, config: configparser.ConfigParser) -> None:
         self.logger = logging.getLogger(__name__)
         self.spark = spark
+        self.config = config
 
         self.context = ValidationContext(
             spark=spark,
-            file_hunt_path = file_hunt_path
+            file_hunt_path = file_hunt_path,
+            master_spec_name = self.config['FILES']['master_spec_name']
         )
 
     def __init_rules(self):
@@ -37,11 +41,12 @@ class SystemLaunchValidator():
             ValidateFeedSpecsJSON(),
             PrimaryKey(),
             ColumnExistsInSelection(),
+            PartitionKeysCheck(),
+            CompositeKeysCheck(),
+            VacuumHoursCheck(),
             EnforceStandardChecks(),
             StandardCheckStructureCheck(),
-            ComprehensiveChecksDependencyDatasetCheck(),
-            PartitionKeysCheck(),
-            CompositeKeysCheck()
+            ComprehensiveChecksDependencyDatasetCheck()
         ]
 
     def run(self):
@@ -49,6 +54,7 @@ class SystemLaunchValidator():
         validator = Validator(self.rules, fail_fast=True)
         return validator.validate(self.context)
 
-    def get_validated_master_specs(self):
-        return self.context.get_master_specs()
+    def get_validated_master_specs(self) -> pd.DataFrame:
+        opt_df = self.context.get_master_specs()
+        return opt_df
 
