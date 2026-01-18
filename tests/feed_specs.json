@@ -4,6 +4,7 @@
     "partition_keys": [],
     "vacuum_hours": 168,
     "source_table_name": "demo.customers",
+    "selection_query":"",
     "selection_schema": {
         "type": "struct",
         "fields": [
