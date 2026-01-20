@@ -241,7 +241,7 @@ class BaseLoadStrategy(ABC):
                 self._current_staging_table_df = df
                 self._current_staging_incremental_table_df = incr_df
                 self.logger.info(
-                    f"✅ First load completed (FULL + INCR) | PARTION REBUILD: [{partition_mismatch}]"
+                    f"First load completed (FULL + INCR) | PARTION REBUILD: [{partition_mismatch}]"
                 )
                 return True
             current_version = self.get_max_table_version(full_table)
@@ -353,7 +353,7 @@ class BaseLoadStrategy(ABC):
             self._current_staging_table_df = spark.read.table(full_table)
             self._current_staging_incremental_table_df = spark.read.table(incr_table)
             self.logger.info(
-                f"✅ INCR updated using MERGE + CDF (Δ {current_version} → {new_version}). Affected Records {incr_df.count()}"
+                f"INCR updated using MERGE + CDF (Δ {current_version} → {new_version}). Affected Records {incr_df.count()}"
             )
             return True
         except Exception as e:

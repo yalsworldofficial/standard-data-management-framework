@@ -16,7 +16,7 @@ from sdmf.data_quality.runner.FeedDataQualityRunner import FeedDataQualityRunner
 
 class Orchestrator():
 
-    def  __init__(self, spark: SparkSession, file_hunt_path: str, config: configparser.ConfigParser) -> None:
+    def  __init__(self, spark: SparkSession, config: configparser.ConfigParser) -> None:
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.run_id = uuid.uuid4().hex
@@ -55,7 +55,7 @@ class Orchestrator():
             """
         )
         self.spark = spark
-        self.file_hunt_path = file_hunt_path
+        self.file_hunt_path = config['DEFAULT']['file_hunt_path']
         self.system_run_report = pd.DataFrame()
         self.logger.info(f'Run ID: {self.run_id}')
 

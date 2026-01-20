@@ -53,7 +53,6 @@ cfg.read("files_dev/config.ini")
 
 myOrchestrator = Orchestrator(
     spark,
-    file_hunt_path="files_dev/",
     config=cfg
 )
 
