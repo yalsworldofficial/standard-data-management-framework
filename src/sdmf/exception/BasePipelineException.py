@@ -20,7 +20,7 @@ class BasePipelineException(Exception):
 
         try:
             error_msg = self.__str__()
-            logger.error(error_msg)
+            logger.error(f"{error_msg}, Full Message: {self.to_dict()}")
         except:
             pass
 

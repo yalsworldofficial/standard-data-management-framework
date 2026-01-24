@@ -25,7 +25,13 @@ class BaseLoadStrategy(ABC):
         self.config = config
         self.spark = spark
         self.logger = logging.getLogger(__name__)
-        self._current_target_table_name = f"{ '' if self.config.target_unity_catalog is None else f'{self.config.target_unity_catalog}.'}{self.config.target_schema_name}.{self.config.target_table_name}"
+        if self.config.target_unity_catalog == "testing":
+            self._current_target_table_name = f"{self.config.target_schema_name}.{self.config.target_table_name}"
+            self._staging_schema = f"staging"
+        else:
+            self._current_target_table_name = f"{self.config.target_unity_catalog}.{self.config.target_schema_name}.{self.config.target_table_name}"
+            self._staging_schema = f"{self.config.target_unity_catalog}.{self.config.target_schema_name}.staging"
+
 
     def execute(self) -> LoadResult:
         """
@@ -38,7 +44,7 @@ class BaseLoadStrategy(ABC):
         except Exception as e:
             raise DataLoadException(
                 "Somethine went wrong while executing data load",
-                load_type=self.config.load_specs["load_type"],
+                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
             )
 
@@ -50,7 +56,7 @@ class BaseLoadStrategy(ABC):
         try:
             return self.load()
         except Exception as e:
-            return LoadResult(success=False)
+            return LoadResult(feed_id=self.config.master_specs['feed_id'], success=False)
 
     @abstractmethod
     def load(self) -> LoadResult:
@@ -87,12 +93,12 @@ class BaseLoadStrategy(ABC):
     def _create_staging_layer(self) -> bool:
         """
         Staging Layer (MERGE + CDC) with partitioning and schema alignment:
-        - FULL table is updated using MERGE on `_x_row_hash`.
+        - FULL table is updated using MERGE on _x_row_hash.
         - INCR table contains only true inserts/updates/deletes from CDF.
-        - Partitioning handled via self.config.load_specs['partition_keys'].
+        - Partitioning handled via self.config.feed_specs['partition_keys'].
         """
         spark = self.spark
-        staging_schema = f"{ '' if self.config.target_unity_catalog is None else f'{self.config.target_unity_catalog}.'}staging"
+        staging_schema = self._staging_schema
         full_table = f"{staging_schema}.t_full_{self.config.target_table_name}"
         incr_table = f"{staging_schema}.t_incr_{self.config.target_table_name}"
         all_changes_table = (
@@ -106,24 +112,22 @@ class BaseLoadStrategy(ABC):
                 f"FULL table [{full_table}] ",
                 f"INCR table [{incr_table}] ",
                 f"CDF table [{all_changes_table}] ",
-                f"Current Partitioning Scheme: {self.config.load_specs['partition_keys']}",
+                f"Current Partitioning Scheme: {self.config.feed_specs['partition_keys']}",
             ]
         )
         self.logger.info(f"Creating Schema [{staging_schema}] if it doesn't exist.")
         spark.sql(f"CREATE SCHEMA IF NOT EXISTS {staging_schema}")
         try:
             df = (
-                spark.sql(self.config.load_specs["selection_query"])
-                if self.config.load_specs["selection_query"]
-                else spark.read.table(self.config.load_specs["source_table_name"])
+                spark.sql(self.config.feed_specs["selection_query"])
+                if self.config.feed_specs["selection_query"]
+                else spark.read.table(self.config.feed_specs["source_table_name"])
             )
+            print(df.count())
             latest_source_version = -9999
-            if (
-                self.config.load_specs["source_table_name"] != ""
-                or self.config.load_specs["source_table_name"] is not None
-            ):
+            if self.config.feed_specs["source_table_name"]:
                 src_history = spark.sql(
-                    f"DESCRIBE HISTORY {self.config.load_specs['source_table_name']}"
+                    f"DESCRIBE HISTORY {self.config.feed_specs['source_table_name']}"
                 )
                 agg_result = src_history.agg({"version": "max"}).first()
 
@@ -131,10 +135,9 @@ class BaseLoadStrategy(ABC):
                     latest_source_version = int(agg_result[0])
                 else:
                     latest_source_version = None
-
             else:
                 self.logger.info("Source Data is in the form of a query:")
-                self.logger.info(self.config.load_specs["selection_query"])
+                self.logger.info(self.config.feed_specs["selection_query"])
             if df is None or len(df.columns) == 0:
                 self.logger.info("Source empty. Skipping staging.")
                 return False
@@ -145,11 +148,11 @@ class BaseLoadStrategy(ABC):
                 if table_details is not None:
                     existing_partition_cols = list(table_details["partitionColumns"])
                     partition_mismatch = set(existing_partition_cols) != set(
-                        self.config.load_specs["partition_keys"]
+                        self.config.feed_specs["partition_keys"]
                     )
                     if partition_mismatch:
                         self.logger.info(
-                            f"Partition mismatch detected, Rebuilding FULL and INCR table from [{existing_partition_cols}] to [{self.config.load_specs['partition_keys']}]"
+                            f"Partition mismatch detected, Rebuilding FULL and INCR table from [{existing_partition_cols}] to [{self.config.feed_specs['partition_keys']}]"
                         )
 
                     props = spark.sql(f"SHOW TBLPROPERTIES {full_table}")
@@ -183,30 +186,30 @@ class BaseLoadStrategy(ABC):
                 ),
             ).withColumn("_x_load_id", F.lit(load_id))
 
-            if len(self.config.load_specs["partition_keys"]) != 0:
+            if len(self.config.feed_specs["partition_keys"]) != 0:
                 null_rows = df.filter(
                     " OR ".join(
                         [
                             f"{c} IS NULL"
-                            for c in self.config.load_specs["partition_keys"]
+                            for c in self.config.feed_specs["partition_keys"]
                         ]
                     )
                 )
                 if null_rows.count() > 0:
                     self.logger.error(
-                        f"There are null values in the selected partition columns => [{self.config.load_specs['partition_keys']}]"
+                        f"There are null values in the selected partition columns => [{self.config.feed_specs['partition_keys']}]"
                     )
                     return False
             if full_exists == False or partition_mismatch == True:
                 writer = df.write.format("delta").mode("overwrite")
                 if partition_mismatch:
                     writer = writer.option("overwriteSchema", "true")
-                writer.partitionBy(*getattr(self, "partition_keys", [])).saveAsTable(
+                writer.partitionBy(*self.config.feed_specs["partition_keys"]).saveAsTable(
                     full_table
                 )
                 if (
-                    self.config.load_specs["selection_query"] == ""
-                    or self.config.load_specs["selection_query"] == None
+                    self.config.feed_specs["selection_query"] == ""
+                    or self.config.feed_specs["selection_query"] == None
                 ):
                     self.logger.info(
                         f"Updating _x_latest_source_version in full table [{full_table}] with {latest_source_version}"
@@ -236,7 +239,7 @@ class BaseLoadStrategy(ABC):
                 if partition_mismatch:
                     incr_writer = incr_writer.option("overwriteSchema", "true")
                 incr_writer.partitionBy(
-                    *getattr(self, "partition_keys", [])
+                    *self.config.feed_specs["partition_keys"]
                 ).saveAsTable(incr_table)
                 self._current_staging_table_df = df
                 self._current_staging_incremental_table_df = incr_df
@@ -246,8 +249,8 @@ class BaseLoadStrategy(ABC):
                 return True
             current_version = self.get_max_table_version(full_table)
             df.createOrReplaceTempView("incoming_data")
-            primary_key = self.config.load_specs.get("primary_key")
-            composite_keys = self.config.load_specs.get("composite_key", [])
+            primary_key = self.config.feed_specs.get("primary_key")
+            composite_keys = self.config.feed_specs.get("composite_key", [])
             all_keys = [primary_key] if primary_key else []
             all_keys.extend([k for k in composite_keys if k not in all_keys])
             merge_condition = " AND ".join([f"tgt.{c} = src.{c}" for c in all_keys])
@@ -301,6 +304,7 @@ class BaseLoadStrategy(ABC):
                 .select("post.*")
                 .withColumn("_x_operation", F.lit("update"))
             )
+            
             true_inserts = cdf_df.filter("_change_type = 'insert'").withColumn(
                 "_x_operation", F.lit("insert")
             )
@@ -314,22 +318,22 @@ class BaseLoadStrategy(ABC):
                 f"_x_load_id = '{load_id}'"
             )
             true_deletes = true_deletes.drop("_change_type")
+
             incr_df = (
                 (true_inserts.unionByName(true_updates).unionByName(true_deletes))
-                .drop()
                 .withColumnRenamed("_commit_version", "_x_commit_version")
                 .withColumnRenamed("_commit_timestamp", "_x_commit_timestamp")
             )
+            print('no prob')
+            print(incr_df.columns)
             incr_df.write.format("delta").mode("overwrite").partitionBy(
-                *getattr(self, "partition_keys", [])
+                *self.config.feed_specs["partition_keys"]
             ).saveAsTable(incr_table)
+            print('no prob')
             cdf_df.write.format("delta").mode("overwrite").partitionBy(
-                *getattr(self, "partition_keys", [])
+                *self.config.feed_specs["partition_keys"]
             ).saveAsTable(all_changes_table)
-            if (
-                self.config.load_specs["selection_query"] == ""
-                or self.config.load_specs["selection_query"] is None
-            ):
+            if self.config.feed_specs["selection_query"]:
                 spark.sql(
                     f"""
                     ALTER TABLE {full_table}
@@ -341,8 +345,8 @@ class BaseLoadStrategy(ABC):
                 f"Affected Records: {incr_df.count()}"
             )
             if (
-                self.config.load_specs["selection_query"] == ""
-                or self.config.load_specs["selection_query"] is None
+                self.config.feed_specs["selection_query"] == ""
+                or self.config.feed_specs["selection_query"] is None
             ):
                 self.logger.info(
                     f"Updating _x_latest_source_version in full table [{full_table}] with {latest_source_version}"
@@ -358,8 +362,8 @@ class BaseLoadStrategy(ABC):
             return True
         except Exception as e:
             raise DataLoadException(
-                message=f"Error in staging layer for {self.config.load_specs['source_table_name']}",
-                load_type=self.config.load_specs["load_type"],
+                message=f"Error in staging layer for {self.config.feed_specs['source_table_name']}",
+                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
             )
 
@@ -369,8 +373,8 @@ class BaseLoadStrategy(ABC):
         Once a load_type has been applied, switching to another type is disallowed.
         This is enforced using Delta table properties.
         """
-        target_table = f"{"" if self.config.target_unity_catalog == None else f"{self.config.target_unity_catalog}."}{self.config.target_schema_name}.{self.config.target_table_name}"
-        current_type = self.config.load_specs["load_type"]
+        target_table = self._current_target_table_name
+        current_type = self.config.master_specs["load_type"]
         try:
             if self.spark.catalog.tableExists(target_table):
                 props_df = self.spark.sql(f"SHOW TBLPROPERTIES {target_table}")
@@ -390,7 +394,7 @@ class BaseLoadStrategy(ABC):
                                 f"Attempted: '{current_type}'. "
                                 f"Switching load types is not permitted."
                             ),
-                            load_type=self.config.load_specs["load_type"],
+                            load_type=self.config.master_specs["load_type"],
                             original_exception=None,
                         )
                     else:
@@ -412,6 +416,6 @@ class BaseLoadStrategy(ABC):
         except Exception as e:
             raise DataLoadException(
                 message="Something went wrong while enforcing load type consistency",
-                load_type=self.config.load_specs["load_type"],
+                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
             )

@@ -34,6 +34,7 @@ class EnforceMasterSpecsStructure(ValidationRule):
             "feed_type",
             "feed_specs",
             "load_type",
+            "target_unity_catalog",
             "target_schema_name",
             "target_table_name",
             "suggested_feed_name",

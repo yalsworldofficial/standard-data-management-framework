@@ -17,6 +17,7 @@ pip install -e .
 Then run:
 
 python -m sdmf.cli.main
+pip install pyspark==3.5.1 delta-spark==3.1.0
 
 
 ✔ This is the recommended solution for a src/ layout.

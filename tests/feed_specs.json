@@ -1,15 +1,15 @@
 {
-    "primary_key": "alpha3-b",
+    "primary_key": "alpha3_b",
     "composite_key": [],
     "partition_keys": [],
     "vacuum_hours": 168,
     "source_table_name": "demo.customers",
-    "selection_query":"",
+    "selection_query":null,
     "selection_schema": {
         "type": "struct",
         "fields": [
             {
-                "name": "alpha3-b",
+                "name": "alpha3_b",
                 "type": "string",
                 "nullable": true
             },
@@ -35,7 +35,7 @@
             "check_sequence": [
                 "_check_primary_key"
             ],
-            "column_name": "alpha3-b",
+            "column_name": "alpha3_b",
             "threshold": 0
         },
         {

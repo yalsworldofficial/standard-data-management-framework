@@ -6,49 +6,43 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # external
 import pandas as pd
+from pyspark.sql import SparkSession
 
 # internal
-from sdmf.data_movement_framework.load_types.FullLoad import FullLoad
+from sdmf.data_movement_framework.LoadDispatcher import LoadDispatcher
 from sdmf.exception.DataLoadException import DataLoadException
-
-
-# Your Spark ingestion class
-class SparkIngestor:
-    def __init__(self, spec):
-        self.spec = spec
-
-    def load_data(self):
-        # Spark ingestion logic here
-        print(f"Loading data for {self.spec['feed_name']}")
-        # Simulate work
-        return f"Completed {self.spec['feed_name']}"
+from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
 
 class DataLoadController():
-    def __init__(self, config: configparser.ConfigParser) -> None:
+
+    def __init__(self, config: configparser.ConfigParser, spark: SparkSession) -> None:
         self.logger = logging.getLogger(__name__)
         self.logger.info('Data Load Controller has been initialized...')
         self.master_specs_path = os.path.join(config['DEFAULT']['file_hunt_path'], config['FILES']['master_spec_name'])
         self.master_specs_df = pd.DataFrame()
-
+        self.spark = spark
 
     def run(self):
-        
+        self.__prepare()        
+        load_results_list = self.__execute()
+
+    def __execute(self) -> list[LoadResult]:
         results = []
-        with ProcessPoolExecutor(max_workers=None) as executor:  # Use all cores dynamically
-            futures = [executor.submit(SparkIngestor(spec).load_data) for spec in self.parallel_batch]
-
-            # Process sequential feeds while parallel tasks run
-            for seq_spec in self.sequential_batch:
-                result = SparkIngestor(seq_spec).load_data()
+        with ProcessPoolExecutor(max_workers=None) as executor:
+            futures = []
+            for batch in self.parallel_batch:
+                self.logger.info(f'Processing parallel batch: {batch['parallelism_group_number']}...')
+                for master_spec in batch['feeds_in_batch']:
+                    futures.append(executor.submit(LoadDispatcher(master_spec=master_spec, spark=self.spark).dispatch))
+        for batch in self.sequential_batch:
+            self.logger.info(f'Sequential batch batch: {batch['parallelism_group_number']}...')
+            for master_spec in batch['feeds_in_batch']:
+                result = LoadDispatcher(master_spec=master_spec, spark=self.spark).dispatch()
                 results.append(result)
-
-            # Collect parallel results
-            for future in as_completed(futures):
-                results.append(future.result())
-
-        print("All results:", results)
-
+        for future in as_completed(futures):
+            results.append(future.result())
+        return results
 
     def __prepare(self):
         self.logger.info('Loading validated master specs...')
