@@ -127,7 +127,6 @@ class BaseLoadStrategy(ABC):
                 if self.config.feed_specs["selection_query"]
                 else spark.read.table(self.config.feed_specs["source_table_name"])
             )
-            print(df.count())
             latest_source_version = -9999
             if self.config.feed_specs["source_table_name"]:
                 src_history = spark.sql(
@@ -328,12 +327,9 @@ class BaseLoadStrategy(ABC):
                 .withColumnRenamed("_commit_version", "_x_commit_version")
                 .withColumnRenamed("_commit_timestamp", "_x_commit_timestamp")
             )
-            print('no prob')
-            print(incr_df.columns)
             incr_df.write.format("delta").mode("overwrite").partitionBy(
                 *self.config.feed_specs["partition_keys"]
             ).saveAsTable(incr_table)
-            print('no prob')
             cdf_df.write.format("delta").mode("overwrite").partitionBy(
                 *self.config.feed_specs["partition_keys"]
             ).saveAsTable(all_changes_table)

@@ -1,6 +1,7 @@
 # inbuilt
-import logging
+import os
 import uuid
+import logging
 import configparser
 
 # external
@@ -19,60 +20,17 @@ class Orchestrator():
 
     def  __init__(self, spark: SparkSession, config: configparser.ConfigParser) -> None:
         self.config = config
-        LoggingConfig().configure()
-        self.logger = logging.getLogger(__name__)
         self.run_id = uuid.uuid4().hex
-        self.logger.info(
-            f"""
-            Welcome to SDMF — Standard Data Management Framework
-            Designed and Developed By: Harsh Handoo (Data Engineer)
-            Supported Load Types: FULL_LOAD, APPEND_LOAD, INCREMENTAL_CDC, SCD_TYPE_2
-            CURRENT RUN ID: {self.run_id}
-            """
-        )
+        LoggingConfig(
+            run_id=self.run_id, 
+            log_dir=os.path.join(config['DEFAULT']['file_hunt_path'], config['DEFAULT']['log_directory_name']), 
+            retention_days=int(config['DEFAULT']['log_retention_policy_in_days'])
+        ).configure()
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(f"""Welcome to SDMF — Standard Data Management Framework""")
         self.spark = spark
         self.file_hunt_path = config['DEFAULT']['file_hunt_path']
         self.system_run_report = pd.DataFrame()
-
-    # def __log_spark_cluster_info(self, spark: SparkSession, logger):
-    #     conf = spark.conf
-    #     logger.info(
-    #         """Spark Runtime Information
-    #         ============================================================
-    #         Application Name : %s
-    #         Spark Version    : %s
-    #         Master URL       : %s
-    #         Spark UI         : %s
-
-    #         Driver Configuration
-    #         ------------------------------------------------------------
-    #         Driver Memory    : %s
-    #         Driver Cores     : %s
-
-    #         Executor Configuration
-    #         ------------------------------------------------------------
-    #         Executor Memory  : %s
-    #         Executor Cores   : %s
-    #         Executor Count   : %s
-
-    #         SQL Configuration
-    #         ------------------------------------------------------------
-    #         Shuffle Partitions : %s
-
-    #         """
-    #         ,
-    #         spark.sparkContext.appName if hasattr(spark, "sparkContext") else "UNKNOWN",
-    #         spark.version,
-    #         conf.get("spark.master", "NOT SET"),
-    #         conf.get("spark.ui.enabled", "true"),
-    #         conf.get("spark.driver.memory", "NOT SET"),
-    #         conf.get("spark.driver.cores", "NOT SET"),
-    #         conf.get("spark.executor.memory", "NOT SET"),
-    #         conf.get("spark.executor.cores", "NOT SET"),
-    #         conf.get("spark.executor.instances", "DYNAMIC / NOT SET"),
-    #         conf.get("spark.sql.shuffle.partitions", "200")
-    #     )
-
 
     def __system_prerequisites(self):
         my_SystemLaunchValidator = SystemLaunchValidator(file_hunt_path=self.file_hunt_path, spark=self.spark, config = self.config)
@@ -81,10 +39,8 @@ class Orchestrator():
         self.system_run_report = validation_result.results_df
 
     def run(self):
-        # perform data quality
         self.logger.info('Ensuring system readiness...')
         self.__system_prerequisites()
-        # self.__log_spark_cluster_info(spark=self.spark, logger=self.logger)
         self.logger.info('System is up and ready.')
         self.logger.info('Starting Validate and Load....')
         self.__validate_and_load()

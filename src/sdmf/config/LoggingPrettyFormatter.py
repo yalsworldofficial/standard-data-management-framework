@@ -14,6 +14,12 @@ class LoggingPrettyFormatter(logging.Formatter):
         "ENDC": "\033[0m",
     }
 
+    
+    def __init__(self, is_log_verbose: bool = True):
+        super().__init__()
+        self.is_log_verbose = is_log_verbose
+
+
     def format(self, record: logging.LogRecord) -> str:
         ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -25,4 +31,4 @@ class LoggingPrettyFormatter(logging.Formatter):
             color = endc = ""
 
         message = record.getMessage()
-        return f"{color}[{ts}] [{record.name}] [{record.levelname}] - {message}{endc}"
+        return f"{color}[{ts}] {f"[{record.name}]" if self.is_log_verbose else ""} [{record.levelname}] - {message}{endc}"

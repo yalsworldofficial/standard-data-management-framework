@@ -4,8 +4,9 @@ import time
 import logging
 import configparser
 from datetime import datetime
+from io import BytesIO
 from dataclasses import asdict
-import sys
+import shutil
 
 # external
 from openpyxl import Workbook
@@ -133,6 +134,7 @@ class ResultGenerator():
         date_str = now.strftime("%Y%m%d")
         return os.path.join(output_directory, f"results_{self.run_id}_{date_str}_{int(time.time())}.xlsx")
 
+    
     def __generate_result_file(self):
         try:
             wb = Workbook()
@@ -146,14 +148,23 @@ class ResultGenerator():
                 ws.append(list(df.columns))
                 for row in df.itertuples(index=False, name=None):
                     ws.append(row)
+
             self.save_path = self.__generate_file_name()
-            wb.save(self.save_path)
+
+            buffer = BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+
+            with open(self.save_path, "wb") as f:
+                shutil.copyfileobj(buffer, f)
+
             self.logger.info(f"Excel report created: {os.path.abspath(self.save_path)}")
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while generating excel file.",
                 original_exception=e
             )
+
 
 
     def __segregate_results(self):

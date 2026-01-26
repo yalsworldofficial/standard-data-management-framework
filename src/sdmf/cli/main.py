@@ -1,8 +1,5 @@
 import configparser
-from sdmf.config.LoggingConfig import LoggingConfig
 from sdmf.orchestrator.Orchestrator import Orchestrator
-from sdmf.data_movement_framework.DataLoadController import DataLoadController
-LoggingConfig().configure()
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import expr
 
