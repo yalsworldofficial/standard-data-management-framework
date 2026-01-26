@@ -5,7 +5,7 @@ import logging
 import configparser
 from datetime import datetime
 from dataclasses import asdict
-import traceback
+import sys
 
 # external
 from openpyxl import Workbook
@@ -72,8 +72,7 @@ class ResultGenerator():
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while running result generator.",
-                original_exception=e,
-                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                original_exception=e           
             )
 
     def __sheet_generator(self, df: pd.DataFrame, sheet_name: str):
@@ -153,9 +152,9 @@ class ResultGenerator():
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while generating excel file.",
-                original_exception=e,
-                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                original_exception=e
             )
+
 
     def __segregate_results(self):
         try:
@@ -179,7 +178,6 @@ class ResultGenerator():
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while segregating results",
-                original_exception=e,
-                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                original_exception=e
             )
 
