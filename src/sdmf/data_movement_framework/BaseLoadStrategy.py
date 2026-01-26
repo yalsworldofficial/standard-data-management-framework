@@ -48,8 +48,7 @@ class BaseLoadStrategy(ABC):
             raise DataLoadException(
                 message="Somethine went wrong while executing data load",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e,
-                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                original_exception=e
             )
 
     def _perform_load(self) -> LoadResult:
@@ -364,8 +363,7 @@ class BaseLoadStrategy(ABC):
             raise DataLoadException(
                 message=f"Error in staging layer for {self.config.feed_specs['source_table_name']}",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e,
-                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                original_exception=e
             )
 
     def _enforce_load_type_consistency(self) -> None:
@@ -396,8 +394,7 @@ class BaseLoadStrategy(ABC):
                                 f"Switching load types is not permitted."
                             ),
                             load_type=self.config.master_specs["load_type"],
-                            original_exception=None,
-                            details=""
+                            original_exception=None
                         )
                     else:
                         self.logger.info(
@@ -419,6 +416,5 @@ class BaseLoadStrategy(ABC):
             raise DataLoadException(
                 message="Something went wrong while enforcing load type consistency",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e,
-                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                original_exception=e
             )

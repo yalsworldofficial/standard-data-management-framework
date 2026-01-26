@@ -1,6 +1,5 @@
 # inbuilt
 import logging
-import traceback
 
 # external
 import pyspark.sql.functions as F
@@ -15,7 +14,7 @@ from sdmf.exception.DataLoadException import DataLoadException
 class IncrementalCDC(BaseLoadStrategy):
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-        self.logger.info("Initializing FULL_LOAD data transfer component...")
+        self.logger.info("Initializing INCREMENTAL_LOAD data transfer component...")
 
     def load(self) -> LoadResult:
         """
@@ -132,8 +131,7 @@ class IncrementalCDC(BaseLoadStrategy):
                 raise DataLoadException(
                     load_type=self.config.feed_specs["load_type"],
                     original_exception=None,
-                    message=f"Target table {target_table} schema [{target_df.columns}] does not match incremental data schema [{incr_df.columns}].",
-                    details=''
+                    message=f"Target table {target_table} schema [{target_df.columns}] does not match incremental data schema [{incr_df.columns}]."
                 )
             key_condition = " AND ".join([f"target.{k} = source.{k}" for k in all_keys])
             merge_condition = (
@@ -189,6 +187,5 @@ class IncrementalCDC(BaseLoadStrategy):
             raise DataLoadException(
                 load_type=self.config.feed_specs["load_type"],
                 original_exception=e,
-                message=f"Error during Incremental CDC load for {self._current_target_table_name}: {str(e)}",
-                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                message=f"Error during Incremental CDC load for {self._current_target_table_name}: {str(e)}"           
             )
