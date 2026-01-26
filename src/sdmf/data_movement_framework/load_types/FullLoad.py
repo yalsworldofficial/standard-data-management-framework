@@ -1,4 +1,5 @@
 # inbuilt
+import traceback
 import logging
 
 # external
@@ -95,4 +96,5 @@ class FullLoad(BaseLoadStrategy):
                 message=f"Feed ID: {self.config.master_specs['feed_id']}, Error during FULL LOAD for {self._current_target_table_name}: {str(e)}",
                 load_type=self.config.master_specs["load_type"],
                 original_exception=e,
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )

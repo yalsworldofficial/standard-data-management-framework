@@ -1,5 +1,6 @@
 # inbuilt
 import logging
+import traceback
 
 # external
 import pyspark.sql.functions as F
@@ -42,7 +43,14 @@ class IncrementalCDC(BaseLoadStrategy):
                 self.logger.warning(
                     "Incremental CDC aborted: staging layer not created."
                 )
-                return LoadResult(success=False)
+                return LoadResult(
+                    feed_id = self.config.master_specs['feed_id'], 
+                    success=False, 
+                    skipped=False,
+                    total_rows_inserted=0, 
+                    total_rows_deleted=0, 
+                    total_rows_updated=0
+                )
             incr_df = self._current_staging_incremental_table_df
             incr_df = incr_df.drop(
                 "_x_row_hash", "_x_commit_version", "_x_commit_timestamp"
@@ -51,17 +59,31 @@ class IncrementalCDC(BaseLoadStrategy):
                 self.logger.warning(
                     f"No incremental changes found for {self._current_target_table_name}."
                 )
-                return LoadResult(success=False)
+                return LoadResult(
+                    feed_id = self.config.master_specs['feed_id'], 
+                    success=False, 
+                    skipped=True,
+                    total_rows_inserted=0, 
+                    total_rows_deleted=0, 
+                    total_rows_updated=0
+                )
             target_table = self._current_target_table_name
-            primary_key = self.config.load_specs.get("primary_key")
-            composite_keys = self.config.load_specs.get("composite_key", [])
+            primary_key = self.config.feed_specs.get("primary_key")
+            composite_keys = self.config.feed_specs.get("composite_key", [])
             all_keys = [primary_key] if primary_key else []
             all_keys.extend([k for k in composite_keys if k not in all_keys])
             if not all_keys:
                 self.logger.error(
                     f"CDC Load failed: No keys (primary/composite) defined in feed_specs for {target_table}."
                 )
-                return LoadResult(success=False)
+                return LoadResult(
+                    feed_id = self.config.master_specs['feed_id'], 
+                    success=False, 
+                    skipped=False,
+                    total_rows_inserted=0, 
+                    total_rows_deleted=0, 
+                    total_rows_updated=0
+                )
             non_key_columns = [
                 c
                 for c in incr_df.columns
@@ -96,14 +118,22 @@ class IncrementalCDC(BaseLoadStrategy):
                 self.logger.info(
                     f"Created target table {target_table} with initial CDC data."
                 )
-                return LoadResult(success=True)
+                return LoadResult(
+                    feed_id = self.config.master_specs['feed_id'], 
+                    success=True, 
+                    skipped=False,
+                    total_rows_inserted=0, 
+                    total_rows_deleted=0, 
+                    total_rows_updated=0
+                )
             delta_target = DeltaTable.forName(self.spark, target_table)
             target_df = delta_target.toDF()
             if target_df.columns != incr_df.columns:
                 raise DataLoadException(
-                    load_type=self.config.load_specs["load_type"],
+                    load_type=self.config.feed_specs["load_type"],
                     original_exception=None,
                     message=f"Target table {target_table} schema [{target_df.columns}] does not match incremental data schema [{incr_df.columns}].",
+                    details=''
                 )
             key_condition = " AND ".join([f"target.{k} = source.{k}" for k in all_keys])
             merge_condition = (
@@ -141,16 +171,24 @@ class IncrementalCDC(BaseLoadStrategy):
             )
             self.spark.sql(
                 f"ALTER TABLE {self._current_target_table_name} "
-                f"SET TBLPROPERTIES ('data.load_type' = '{self.config.load_specs['load_type']}')"
+                f"SET TBLPROPERTIES ('data.load_type' = '{self.config.feed_specs['load_type']}')"
             )
             change_count = incr_df.count()
             self.logger.info(
                 f"✅ Incremental CDC MERGE completed for {target_table} ({change_count} records processed)."
             )
-            return LoadResult(success=True)
+            return LoadResult(
+                feed_id = self.config.master_specs['feed_id'], 
+                success=True, 
+                skipped=False,
+                total_rows_inserted=0, 
+                total_rows_deleted=0, 
+                total_rows_updated=0
+            )
         except Exception as e:
             raise DataLoadException(
-                load_type=self.config.load_specs["load_type"],
+                load_type=self.config.feed_specs["load_type"],
                 original_exception=e,
                 message=f"Error during Incremental CDC load for {self._current_target_table_name}: {str(e)}",
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )

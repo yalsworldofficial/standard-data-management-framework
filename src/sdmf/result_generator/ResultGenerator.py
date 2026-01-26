@@ -4,18 +4,20 @@ import time
 import logging
 import configparser
 from datetime import datetime
+from dataclasses import asdict
+import traceback
 
 # external
 from openpyxl import Workbook
 import pandas as pd
 
-
 #internal
 from sdmf.exception.ResultGenerationException import ResultGenerationException
+from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
 class ResultGenerator():
 
-    def __init__(self, payload: list[dict], file_hunt_path: str, run_id: str, config: configparser.ConfigParser, system_report: pd.DataFrame) -> None:
+    def __init__(self, payload: list[dict], file_hunt_path: str, run_id: str, config: configparser.ConfigParser, system_report: pd.DataFrame, load_results: list[LoadResult]) -> None:
         self.payload = payload
         self.file_hunt_path = file_hunt_path
         self.run_id = run_id
@@ -46,6 +48,12 @@ class ResultGenerator():
                 "df":system_report
             }
         )
+        self.sheets.append(
+            {
+                "sheet_name": "Load Report",
+                "df": pd.DataFrame([asdict(r) for r in load_results])
+            }
+        )
 
     def run(self):
         try:
@@ -64,7 +72,8 @@ class ResultGenerator():
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while running result generator.",
-                original_exception=e
+                original_exception=e,
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )
 
     def __sheet_generator(self, df: pd.DataFrame, sheet_name: str):
@@ -144,7 +153,8 @@ class ResultGenerator():
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while generating excel file.",
-                original_exception=e
+                original_exception=e,
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )
 
     def __segregate_results(self):
@@ -169,6 +179,7 @@ class ResultGenerator():
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while segregating results",
-                original_exception=e
+                original_exception=e,
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )
 

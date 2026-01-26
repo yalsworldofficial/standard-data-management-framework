@@ -13,7 +13,7 @@ From the project root (where pyproject.toml is):
 
 pip install -e .
 
-
+python -m build
 Then run:
 
 python -m sdmf.cli.main

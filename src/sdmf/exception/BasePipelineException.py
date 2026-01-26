@@ -1,4 +1,3 @@
-import traceback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,7 +15,7 @@ class BasePipelineException(Exception):
         self.details = details
         self.context = context or {}
         self.original_exception = original_exception
-        self.traceback = traceback.format_exc() if original_exception else None
+        self.traceback = details or None
 
         try:
             error_msg = self.__str__()

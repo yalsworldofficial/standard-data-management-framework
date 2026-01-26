@@ -26,34 +26,34 @@ spark = (
     .config("spark.executor.memory", "4g")
     .getOrCreate()
 )
-# # Generate 100 records
-# df = spark.range(1, 150).toDF("row_id")
-# df = (
-#     df
-#     .withColumn("alpha3_b", expr("concat('USA', row_id)"))
-#     .withColumn("alpha3_t", expr("concat('US', row_id)"))
-#     .withColumn("alpha2", expr("substring('US', 1, 2)"))
-#     .withColumn(
-#         "english",
-#         expr("""
-#             CASE
-#                 WHEN row_id % 4 = 0 THEN 'United States'
-#                 WHEN row_id % 4 = 1 THEN 'Germany'
-#                 WHEN row_id % 4 = 2 THEN 'India'
-#                 ELSE 'Canada'
-#             END
-#         """)
-#     )
-#     .drop("row_id")
-# )
-# print(df.count())
-# # Recreate table
-# spark.sql("CREATE DATABASE IF NOT EXISTS demo")
-# spark.sql("DROP TABLE IF EXISTS demo.customers")
-# df.write \
-#     .format("delta") \
-#     .mode("overwrite") \
-#     .saveAsTable("demo.customers")
+# Generate 100 records
+df = spark.range(1, 150).toDF("row_id")
+df = (
+    df
+    .withColumn("alpha3_b", expr("concat('USA', row_id)"))
+    .withColumn("alpha3_t", expr("concat('US', row_id)"))
+    .withColumn("alpha2", expr("substring('US', 1, 2)"))
+    .withColumn(
+        "english",
+        expr("""
+            CASE
+                WHEN row_id % 4 = 0 THEN 'United States'
+                WHEN row_id % 4 = 1 THEN 'Germany'
+                WHEN row_id % 4 = 2 THEN 'India'
+                ELSE 'Canada'
+            END
+        """)
+    )
+    .drop("row_id")
+)
+print(df.count())
+# Recreate table
+spark.sql("CREATE DATABASE IF NOT EXISTS demo")
+spark.sql("DROP TABLE IF EXISTS demo.customers")
+df.write \
+    .format("delta") \
+    .mode("overwrite") \
+    .saveAsTable("demo.customers")
 
 import random
 import string
@@ -87,16 +87,16 @@ spark.sql(query)
 
 cfg = configparser.ConfigParser()
 cfg.read("files_dev/config.ini")
-# myOrchestrator = Orchestrator(
-#     spark,
-#     config=cfg
-# )
-# myOrchestrator.run()
-my_DataLoadController = DataLoadController(cfg, spark=spark)
-my_DataLoadController.run()
+myOrchestrator = Orchestrator(
+    spark,
+    config=cfg
+)
+myOrchestrator.run()
+# my_DataLoadController = DataLoadController(cfg, spark=spark)
+# my_DataLoadController.run()
 
 
-spark.sql("select count(*) from demo.customers").show()
+# spark.sql("select count(*) from demo.customers").show()
 
 # ['alpha3_b', 'alpha3_t', 'alpha2', 'english', '_x_row_hash', '_x_load_id', '_x_commit_version', '_x_commit_timestamp', '_x_operation']
 
@@ -105,4 +105,4 @@ spark.sql("select count(*) from demo.customers").show()
 # +--------+--------+------+-------+--------------------+--------------------+------------+-----------------+--------------------+
 # |     BBG|     BWP|    NZ| tfhkig|78601e7203cd6d2fe...|9b357744-6825-4fe...|      insert|               25|2026-01-24 18:23:...|
 # +--------+--------+------+-------+--------------------+--------------------+------------+-----------------+--------------------+
-spark.sql("select * from staging.t_incr_t_country_codes").show()
+# spark.sql("select * from staging.t_incr_t_country_codes").show()

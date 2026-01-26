@@ -1,6 +1,7 @@
 # inbuilt
 import uuid
 import logging
+import traceback
 from abc import ABC, abstractmethod
 
 # external
@@ -30,7 +31,9 @@ class BaseLoadStrategy(ABC):
             self._staging_schema = f"staging"
         else:
             self._current_target_table_name = f"{self.config.target_unity_catalog}.{self.config.target_schema_name}.{self.config.target_table_name}"
-            self._staging_schema = f"{self.config.target_unity_catalog}.{self.config.target_schema_name}.staging"
+            self._staging_schema = f"{self.config.target_unity_catalog}.staging"
+
+        self.logger.info(f"Current Table Name: {self._current_target_table_name}, Staging Schema: {self._staging_schema}")
 
 
     def execute(self) -> LoadResult:
@@ -43,9 +46,10 @@ class BaseLoadStrategy(ABC):
             return result
         except Exception as e:
             raise DataLoadException(
-                "Somethine went wrong while executing data load",
+                message="Somethine went wrong while executing data load",
                 load_type=self.config.master_specs["load_type"],
                 original_exception=e,
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )
 
     def _perform_load(self) -> LoadResult:
@@ -365,6 +369,7 @@ class BaseLoadStrategy(ABC):
                 message=f"Error in staging layer for {self.config.feed_specs['source_table_name']}",
                 load_type=self.config.master_specs["load_type"],
                 original_exception=e,
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )
 
     def _enforce_load_type_consistency(self) -> None:
@@ -396,6 +401,7 @@ class BaseLoadStrategy(ABC):
                             ),
                             load_type=self.config.master_specs["load_type"],
                             original_exception=None,
+                            details=""
                         )
                     else:
                         self.logger.info(
@@ -418,4 +424,5 @@ class BaseLoadStrategy(ABC):
                 message="Something went wrong while enforcing load type consistency",
                 load_type=self.config.master_specs["load_type"],
                 original_exception=e,
+                details=''.join(traceback.format_exception(type(e), e, e.__traceback__))
             )

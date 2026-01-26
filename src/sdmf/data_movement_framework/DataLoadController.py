@@ -10,22 +10,24 @@ from pyspark.sql import SparkSession
 
 # internal
 from sdmf.data_movement_framework.LoadDispatcher import LoadDispatcher
-from sdmf.exception.DataLoadException import DataLoadException
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
 
 class DataLoadController():
 
-    def __init__(self, config: configparser.ConfigParser, spark: SparkSession) -> None:
+    def __init__(self, spark: SparkSession, allowed_df: pd.DataFrame) -> None:
         self.logger = logging.getLogger(__name__)
         self.logger.info('Data Load Controller has been initialized...')
-        self.master_specs_path = os.path.join(config['DEFAULT']['file_hunt_path'], config['FILES']['master_spec_name'])
-        self.master_specs_df = pd.DataFrame()
+        self.master_specs_df = allowed_df
         self.spark = spark
+        self.load_results_list = []
 
     def run(self):
         self.__prepare()        
-        load_results_list = self.__execute()
+        self.load_results_list = self.__execute()
+    
+    def get_load_results(self) -> list[LoadResult]:
+        return self.load_results_list
 
     def __execute(self) -> list[LoadResult]:
         results = []
@@ -46,7 +48,6 @@ class DataLoadController():
 
     def __prepare(self):
         self.logger.info('Loading validated master specs...')
-        self.master_specs_df = self.__load_master_specs()
         self.logger.info('Segregating parallel and sequential batches...')
         self.parallel_batch, self.sequential_batch = self.__segregate_feed_batches()
 
@@ -73,13 +74,3 @@ class DataLoadController():
                 )
             self.logger.info(f"Total Parallel Batches: {len(all_parallel_batches)}, Total Sequential Batches: {len(all_sequential_batches)}")
         return all_parallel_batches, all_sequential_batches
-
-    def __load_master_specs(self) -> pd.DataFrame:
-        try:
-            return pd.read_excel(io=self.master_specs_path, sheet_name='master_specs')
-        except Exception as e:
-            raise DataLoadException(
-                message="Something went wrong while loading master specs.",
-                load_type="NA",
-                original_exception=e
-            )
