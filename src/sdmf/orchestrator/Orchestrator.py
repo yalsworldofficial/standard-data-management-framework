@@ -54,7 +54,7 @@ class Orchestrator():
 
     def __generate_lineage_diagram(self):
         my_DataFlowDiagramGenerator = DataFlowDiagramGenerator(
-            validated_dataframe=self.validated_master_specs_df[self.validated_master_specs_df['is_active'] == True],
+            validated_dataframe=self.validated_master_specs_df,
             config=self.config,
             run_id=self.run_id
         )
