@@ -20,4 +20,6 @@ class SystemRestore():
         pass
 
     def __get_target_state(self):
-        pass
+        for current_spec in self.master_specs:
+            feed_id = current_spec['feed_id']
+            

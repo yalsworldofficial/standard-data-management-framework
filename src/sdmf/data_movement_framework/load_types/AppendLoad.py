@@ -1,15 +1,21 @@
 # inbuilt
 import logging
 
+# external
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType
+
 # internal
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
+from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.BaseLoadStrategy import BaseLoadStrategy
 from sdmf.exception.DataLoadException import DataLoadException
 
 
 class AppendLoad(BaseLoadStrategy):
 
-    def __init__(self) -> None:
+    def __init__(self, config: LoadConfig, spark: SparkSession) -> None:
+        super().__init__(config=config, spark=spark)
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing APPEND_LOAD data transfer component...")
 
@@ -48,10 +54,10 @@ class AppendLoad(BaseLoadStrategy):
             
             self.logger.info(f"Found [{inc_count}] new records to append for {self._current_target_table_name}.")
 
-
+            incremental_df = self._enforce_schema(incremental_df, StructType.fromJson(self.config.feed_specs['selection_schema']))
             incremental_df.write.format("delta").mode("append").saveAsTable(self._current_target_table_name)
             self.spark.sql(
-                f"ALTER TABLE {self._current_target_table_name} SET TBLPROPERTIES ('data.load_type' = '{self.config.feed_specs["load_type"]}')"
+                f"ALTER TABLE {self._current_target_table_name} SET TBLPROPERTIES ('data.load_type' = '{self.config.master_specs["load_type"]}')"
             )
 
             self.logger.info(f"APPEND LOAD completed successfully for {self._current_target_table_name}")
@@ -65,7 +71,7 @@ class AppendLoad(BaseLoadStrategy):
 
         except Exception as e:
             raise DataLoadException(
-                load_type=self.config.feed_specs["load_type"],
+                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
                 message=f"Error during APPEND_LOAD for {self._current_target_table_name}: {str(e)}"           
             )

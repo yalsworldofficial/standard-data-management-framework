@@ -1,14 +1,14 @@
 # inbuilt
 import uuid
 import logging
-import traceback
 from abc import ABC, abstractmethod
 
 # external
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
-from pyspark.sql.types import LongType, TimestampType
+from pyspark.sql.types import LongType, TimestampType, StructType
 from delta.tables import DeltaTable
+from pyspark.sql import DataFrame
 
 # internal
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
@@ -34,6 +34,16 @@ class BaseLoadStrategy(ABC):
             self._staging_schema = f"{self.config.target_unity_catalog}.staging"
 
         self.logger.info(f"Current Table Name: {self._current_target_table_name}, Staging Schema: {self._staging_schema}")
+
+    def _enforce_schema(self, df: DataFrame, schema: StructType):
+        return df.select(
+            *[
+                F.col(f.name).cast(f.dataType).alias(f.name)
+                if f.name in df.columns
+                else F.lit(None).cast(f.dataType).alias(f.name)
+                for f in schema.fields
+            ]
+        )
 
 
     def execute(self) -> LoadResult:

@@ -29,6 +29,7 @@ class Orchestrator():
         self.file_hunt_path = config['DEFAULT']['file_hunt_path']
         self.system_run_report = pd.DataFrame()
         self.logger.info(f"Current Run Id: {self.run_id}")
+        self.logger.info(f'Is FAIR: {spark.sparkContext.getConf().get("spark.scheduler.mode")}')
 
     def __system_prerequisites(self):
         my_SystemLaunchValidator = SystemLaunchValidator(file_hunt_path=self.file_hunt_path, spark=self.spark, config = self.config)
@@ -78,7 +79,7 @@ class Orchestrator():
         load_results = []
         if len(can_ingest_feed_id) > 0:
             allowed_df = self.validated_master_specs_df[self.validated_master_specs_df["feed_id"].isin(can_ingest_feed_id)]
-            my_DataLoadController = DataLoadController(allowed_df=allowed_df, spark=self.spark)
+            my_DataLoadController = DataLoadController(allowed_df=allowed_df, spark=self.spark, config = self.config)
             my_DataLoadController.run()
             load_results = my_DataLoadController.get_load_results()
             obj.adhoc_post_load()

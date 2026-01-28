@@ -1,8 +1,6 @@
 import configparser
-from sdmf.config.LoggingConfig import LoggingConfig
 from sdmf.orchestrator.Orchestrator import Orchestrator
 from sdmf.data_movement_framework.DataLoadController import DataLoadController
-LoggingConfig().configure()
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import expr
 
@@ -35,4 +33,4 @@ spark = (
 
 
 
-spark.sql("restore  demo.customers version as of 3").show()
+spark.sql('select * from demo.t_country_codes limit 100').show()

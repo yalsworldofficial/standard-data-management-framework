@@ -3,13 +3,13 @@ import logging
 
 # external
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType
 
 # internal
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.BaseLoadStrategy import BaseLoadStrategy
 from sdmf.exception.DataLoadException import DataLoadException
-
 
 class FullLoad(BaseLoadStrategy):
 
@@ -59,19 +59,14 @@ class FullLoad(BaseLoadStrategy):
                 previous_count = self.spark.table(self._current_target_table_name).count()
             else:
                 previous_count = 0
-
-            # table_exists = self.spark.catalog.tableExists(self._current_target_table_name)
-
+            full_staging_df = self._enforce_schema(full_staging_df, StructType.fromJson(self.config.feed_specs['selection_schema']))
             (
-                full_staging_df.write.format("delta")
+                full_staging_df.write.
+                format("delta")
                 .mode("overwrite")
                 .option("overwriteSchema", "true")
                 .saveAsTable(self._current_target_table_name)
             )
-            # self.spark.sql(
-            #     f"ALTER TABLE {self._current_target_table_name} SET TBLPROPERTIES ('data.load_type' = '{self.config.master_specs['load_type']}')"
-            # )
-            # if not table_exists:
             self.logger.info(
                 f"FULL LOAD completed successfully for {self._current_target_table_name} "
                 f"({record_count} records loaded)."
@@ -83,13 +78,6 @@ class FullLoad(BaseLoadStrategy):
                 total_rows_updated=0,
                 total_rows_deleted=previous_count
             )
-            # return LoadResult(
-            #     feed_id = self.config.master_specs['feed_id'],
-            #     success=True, 
-            #     total_rows_inserted=0,
-            #     total_rows_updated=0,
-            #     total_rows_deleted=0
-            # )
         except Exception as e:
             raise DataLoadException(
                 message=f"Feed ID: {self.config.master_specs['feed_id']}, Error during FULL LOAD for {self._current_target_table_name}: {str(e)}",

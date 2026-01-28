@@ -3,7 +3,7 @@
     "composite_key": [],
     "partition_keys": [],
     "vacuum_hours": 168,
-    "source_table_name": "yalsworld_datawarehouse.bronze.generic_languagecodes_iso639_opendatasoft_languagecodes_generic_generic_languagecodes_country_codes_iso639_generic_generic_languagecodes_country_codes_iso639_parquet_unflattened",
+    "source_table_name": "demo.customers",
     "selection_query":null,
     "selection_schema": {
         "type": "struct",
@@ -11,22 +11,34 @@
             {
                 "name": "alpha3_b",
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "metadata": {
+                    "comment": "test"
+                }
             },
             {
                 "name": "alpha3_t",
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "metadata": {
+                    "comment": "test"
+                }
             },
             {
                 "name": "alpha2",
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "metadata": {
+                    "comment": "test"
+                }
             },
             {
                 "name": "english",
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "metadata": {
+                    "comment": "test"
+                }
             }
         ]
     },

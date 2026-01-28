@@ -7,6 +7,7 @@ spark = (
     SparkSession.builder
     .appName("sdmf")
     .enableHiveSupport()
+    .config("spark.scheduler.mode", "FAIR")
     .config(
         "spark.jars.packages",
         "io.delta:delta-spark_2.12:3.1.0"

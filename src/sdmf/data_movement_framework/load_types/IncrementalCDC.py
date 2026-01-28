@@ -4,6 +4,7 @@ import logging
 # external
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType
 from delta.tables import DeltaTable
 
 # internal
@@ -111,6 +112,7 @@ class IncrementalCDC(BaseLoadStrategy):
                 self.logger.info(
                     f"Target table {target_table} not found — creating new table via CDC snapshot."
                 )
+                incr_df = self._enforce_schema(incr_df, StructType.fromJson(self.config.feed_specs['selection_schema']))
                 (
                     incr_df.write.format("delta")
                     .mode("overwrite")
@@ -143,6 +145,7 @@ class IncrementalCDC(BaseLoadStrategy):
             self.logger.info(
                 f"Performing CDC MERGE on [{target_table}] using merge condition [{merge_condition}]"
             )
+            incr_df = self._enforce_schema(incr_df, StructType.fromJson(self.config.feed_specs['selection_schema']))
             (
                 delta_target.alias("target")
                 .merge(incr_df.alias("source"), merge_condition)
@@ -176,7 +179,7 @@ class IncrementalCDC(BaseLoadStrategy):
             )
             change_count = incr_df.count()
             self.logger.info(
-                f"✅ Incremental CDC MERGE completed for {target_table} ({change_count} records processed)."
+                f"Incremental CDC MERGE completed for {target_table} ({change_count} records processed)."
             )
             return LoadResult(
                 feed_id = self.config.master_specs['feed_id'], 

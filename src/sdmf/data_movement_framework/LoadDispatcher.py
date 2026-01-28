@@ -20,7 +20,7 @@ class LoadDispatcher():
         self.spark = spark
 
     def __format_duration(self, seconds: float) -> str:
-        seconds = int(seconds)
+        seconds = round(seconds, 2)
         hours, remainder = divmod(seconds, 3600)
         minutes, secs = divmod(remainder, 60)
         parts = []
@@ -31,8 +31,14 @@ class LoadDispatcher():
         if secs > 0 or not parts:
             parts.append(f"{secs} second{'s' if secs != 1 else ''}")
         return ", ".join(parts[:-1]) + (" and " + parts[-1] if len(parts) > 1 else parts[-1])
+    
+    
 
     def dispatch(self) -> LoadResult:
+        self.spark.sparkContext.setLocalProperty(
+            "spark.scheduler.pool",
+            f"group_{self.master_spec['parallelism_group_number']}"
+        )
         start_time = time.time()
         config = LoadConfig(
             master_specs=self.master_spec,
@@ -59,6 +65,7 @@ class LoadDispatcher():
             exception_if_any = e
             load_result = LoadResult(feed_id = self.master_spec['feed_id'], success=False, total_rows_inserted=0, total_rows_deleted=0, total_rows_updated=0)
         end_time = time.time()
+        load_result.start_epoch = start_time
         load_result.end_epoch = end_time
         load_result.total_human_readable_time = self.__format_duration(end_time - start_time)
         load_result.exception_if_any = exception_if_any
