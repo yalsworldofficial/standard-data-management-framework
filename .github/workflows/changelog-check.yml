@@ -1,0 +1,21 @@
+name: Enforce CHANGELOG
+
+on:
+  pull_request:
+    branches: [ dev ]
+
+jobs:
+  check_changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify CHANGELOG updated
+        run: |
+          git fetch origin main
+          DIFF=$(git diff origin/main --name-only | grep 'CHANGELOG.md' || true)
+          if [ -z "$DIFF" ]; then
+            echo "::error ::CHANGELOG.md not updated. Please update the Unreleased section."
+            exit 1
