@@ -108,16 +108,20 @@ class BaseLoadStrategy(ABC):
             f"{staging_schema}.t_incr_cdf_changes_{self.config.target_table_name}"
         )
 
+        
         self.logger.info(
-            [
-                f"Function: [_create_staging_layer]",
-                "Staging Layer (MERGE + CDC) with partitioning and schema alignment:",
-                f"FULL table [{full_table}] ",
-                f"INCR table [{incr_table}] ",
-                f"CDF table [{all_changes_table}] ",
-                f"Current Partitioning Scheme: {self.config.feed_specs['partition_keys']}",
-            ]
+            (
+                "\n=== Staging Layer Creation ===\n"
+                "Function: [_create_staging_layer]\n"
+                "Operation: MERGE + CDC with partitioning and schema alignment\n"
+                f"FULL Table: [{full_table}]\n"
+                f"INCR Table: [{incr_table}]\n"
+                f"CDF Table: [{all_changes_table}]\n"
+                f"Current Partitioning Scheme: {self.config.feed_specs['partition_keys']}\n"
+                "================================"
+            )
         )
+
         self.logger.info(f"Creating Schema [{staging_schema}] if it doesn't exist.")
         spark.sql(f"CREATE SCHEMA IF NOT EXISTS {staging_schema}")
         try:

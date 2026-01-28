@@ -15,22 +15,21 @@ from sdmf.result_generator.ResultGenerator import ResultGenerator
 from sdmf.validation.SystemLaunchValidator import SystemLaunchValidator
 from sdmf.data_quality.runner.FeedDataQualityRunner import FeedDataQualityRunner
 from sdmf.data_movement_framework.DataLoadController import DataLoadController
+from sdmf.data_flow_diagram_generator.DataFlowDiagramGenerator import DataFlowDiagramGenerator
 
 class Orchestrator():
 
     def  __init__(self, spark: SparkSession, config: configparser.ConfigParser) -> None:
         self.config = config
         self.run_id = uuid.uuid4().hex
-        LoggingConfig(
-            run_id=self.run_id, 
-            log_dir=os.path.join(config['DEFAULT']['file_hunt_path'], config['DEFAULT']['log_directory_name']), 
-            retention_days=int(config['DEFAULT']['log_retention_policy_in_days'])
-        ).configure()
+        self.my_LoggingConfig = LoggingConfig(run_id=self.run_id, config=config)
+        self.my_LoggingConfig.configure()
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"""Welcome to SDMF — Standard Data Management Framework""")
         self.spark = spark
         self.file_hunt_path = config['DEFAULT']['file_hunt_path']
         self.system_run_report = pd.DataFrame()
+        self.logger.info(f"Current Run Id: {self.run_id}")
 
     def __system_prerequisites(self):
         my_SystemLaunchValidator = SystemLaunchValidator(file_hunt_path=self.file_hunt_path, spark=self.spark, config = self.config)
@@ -42,9 +41,25 @@ class Orchestrator():
         self.logger.info('Ensuring system readiness...')
         self.__system_prerequisites()
         self.logger.info('System is up and ready.')
-        self.logger.info('Starting Validate and Load....')
+        self.logger.info('Validating and loading data...')
         self.__validate_and_load()
+        self.logger.info('Generating lineage diagram...')
+        self.__generate_lineage_diagram()
+        self.logger.info('System has finished processing this batch.')
+        self.logger.warning('Saving logs to specified final log directory, no logs after this point will be ratined in *.log file.')
+        self.logger.info('==FINAL LOG==')
+        self.my_LoggingConfig.move_logs_to_final_location()
+        self.my_LoggingConfig.cleanup_final_logs()
         self.logger.info('System has finished processing data.')
+        self.logger.info('Thanks for using SDMF.')
+
+    def __generate_lineage_diagram(self):
+        my_DataFlowDiagramGenerator = DataFlowDiagramGenerator(
+            validated_dataframe=self.validated_master_specs_df[self.validated_master_specs_df['can_ingest'] == True],
+            config=self.config,
+            run_id=self.run_id
+        )
+        my_DataFlowDiagramGenerator.run()
 
     def __validate_and_load(self):
         if self.validated_master_specs_df is None:

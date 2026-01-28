@@ -7,6 +7,9 @@ from pyspark.sql import SparkSession
 
 # internal
 from sdmf.data_movement_framework.load_types.FullLoad import FullLoad
+from sdmf.data_movement_framework.load_types.AppendLoad import AppendLoad
+from sdmf.data_movement_framework.load_types.IncrementalCDC import IncrementalCDC
+from sdmf.data_movement_framework.load_types.SCDType2 import SCDType2
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
@@ -39,7 +42,10 @@ class LoadDispatcher():
             target_table_name=self.master_spec.get('target_table_name', "")
         )
         load_type_map = {
-            'FULL_LOAD': FullLoad
+            'FULL_LOAD': FullLoad,
+            "APPEND_LOAD": AppendLoad,
+            "INCREMENTAL_CDC": IncrementalCDC,
+            "SCD_TYPE_2": SCDType2
         }
 
         load_class = load_type_map.get(self.master_spec.get('load_type', ""))

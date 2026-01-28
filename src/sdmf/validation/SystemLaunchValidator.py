@@ -56,5 +56,6 @@ class SystemLaunchValidator():
 
     def get_validated_master_specs(self) -> pd.DataFrame:
         opt_df = self.context.get_master_specs()
+        opt_df = opt_df[opt_df['is_active'] == "TRUE"]
         return opt_df
 

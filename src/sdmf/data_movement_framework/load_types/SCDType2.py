@@ -3,17 +3,20 @@ import logging
 
 # external
 import pyspark.sql.functions as F
+from pyspark.sql import SparkSession
 from delta.tables import DeltaTable
 
 # internal
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
+from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.BaseLoadStrategy import BaseLoadStrategy
 from sdmf.exception.DataLoadException import DataLoadException
 
 
 class SCDType2(BaseLoadStrategy):
 
-    def __init__(self) -> None:
+    def __init__(self, config: LoadConfig, spark: SparkSession) -> None:
+        super().__init__(config=config, spark=spark)
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing APPEND_LOAD data transfer component...")
 

@@ -7,7 +7,7 @@ from sdmf.data_movement_framework.BaseLoadStrategy import BaseLoadStrategy
 from sdmf.exception.DataLoadException import DataLoadException
 
 
-class AddpendLoad(BaseLoadStrategy):
+class AppendLoad(BaseLoadStrategy):
 
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)

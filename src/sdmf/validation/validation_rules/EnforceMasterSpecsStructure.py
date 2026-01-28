@@ -39,6 +39,7 @@ class EnforceMasterSpecsStructure(ValidationRule):
             "target_table_name",
             "suggested_feed_name",
             "parallelism_group_number",
+            "parent_feed_id",
             "is_active",
         ]
         expected = set(required_columns)
