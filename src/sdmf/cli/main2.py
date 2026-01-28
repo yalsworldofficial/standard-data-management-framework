@@ -1,0 +1,36 @@
+import configparser
+from sdmf.orchestrator.Orchestrator import Orchestrator
+from sdmf.data_movement_framework.DataLoadController import DataLoadController
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import expr
+
+spark = (
+    SparkSession.builder
+    .appName("sdmf")
+    .enableHiveSupport()
+    .config(
+        "spark.jars.packages",
+        "io.delta:delta-spark_2.12:3.1.0"
+    )
+    .config(
+        "spark.sql.extensions",
+        "io.delta.sql.DeltaSparkSessionExtension"
+    )
+    .config(
+        "spark.sql.catalog.spark_catalog",
+        "org.apache.spark.sql.delta.catalog.DeltaCatalog"
+    )
+    .config("spark.driver.memory", "4g")
+    .config("spark.executor.memory", "4g")
+    .getOrCreate()
+)
+
+
+# spark.sql(
+#     f"ALTER TABLE demo.customers SET TBLPROPERTIES ('data.load_type' = 'test')"
+# )
+# spark.sql("describe history demo.customers").show()
+
+
+
+spark.sql('select * from demo.t_country_codes limit 100').show()

@@ -1,0 +1,68 @@
+{
+    "primary_key": "alpha3-b",
+    "composite_key": [],
+    "partition_keys": [],
+    "vacuum_hours": 168,
+    "movement_type": "BRONZE_TO_SILVER",
+    "source_table_name":"demo.customers",
+    "selection_schema": {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "alpha3_b",
+                "type": "string",
+                "nullable": true
+            },
+            {
+                "name": "alpha3_t",
+                "type": "string",
+                "nullable": true
+            },
+            {
+                "name": "alpha2",
+                "type": "string",
+                "nullable": true
+            },
+            {
+                "name": "english",
+                "type": "string",
+                "nullable": true
+            }
+        ]
+    },
+    "standard_checks": [
+        {
+            "check_sequence": [
+                "_check_primary_key"
+            ],
+            "column_name": "alpha3-b",
+            "threshold": 0
+        },
+        {
+            "check_sequence": [
+                "_check_nulls",
+                "_check_duplicates"
+            ],
+            "column_name": "english",
+            "threshold": 0
+        }
+    ],
+    "comprehensive_checks": [
+        {
+            "check_name":"",
+            "query":"Select * from uc_name.schema_name.some_table_name where col_1 IS NULL;",
+            "severity":"ERROR",
+            "threshold": 0,
+            "load_stage":"PRE_LOAD",
+            "dependency_dataset":[]
+        },
+        {
+            "check_name":"",
+            "query":"Select * from uc_name.schema_name.some_table_name where col_1 > 5;",
+            "severity":"WARNING",
+            "threshold": 0,
+            "load_stage":"POST_LOAD",
+            "dependency_dataset":["uc_name.schema_name.some_table_name1", "uc_name.schema_name.some_table_name2"]
+        }
+    ]
+}
