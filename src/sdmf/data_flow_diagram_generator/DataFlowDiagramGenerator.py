@@ -17,11 +17,11 @@ class DataFlowDiagramGenerator():
         self.config = config
         self.run_id = run_id
         self.logger = logging.getLogger(__name__)
-        self.BOX_WIDTH = int(config['LINEAGE_DIAGRAM']['BOX_WIDTH'])
-        self.BOX_HEIGHT = int(config['LINEAGE_DIAGRAM']['BOX_HEIGHT'])
-        self.X_GAP = int(config['LINEAGE_DIAGRAM']['X_GAP'])
-        self.Y_GAP = int(config['LINEAGE_DIAGRAM']['Y_GAP'])
-        self.ROOT_GAP = int(config['LINEAGE_DIAGRAM']['ROOT_GAP'])
+        self.BOX_WIDTH = float(config['LINEAGE_DIAGRAM']['BOX_WIDTH'])
+        self.BOX_HEIGHT = float(config['LINEAGE_DIAGRAM']['BOX_HEIGHT'])
+        self.X_GAP = float(config['LINEAGE_DIAGRAM']['X_GAP'])
+        self.Y_GAP = float(config['LINEAGE_DIAGRAM']['Y_GAP'])
+        self.ROOT_GAP = float(config['LINEAGE_DIAGRAM']['ROOT_GAP'])
         self.validated_dataframe = validated_dataframe
         self.name_map = {}
         self.current_y = 0
@@ -31,16 +31,17 @@ class DataFlowDiagramGenerator():
         self.lineage_id = 1
 
     def run(self):
-        self.logger.info('Building tree structure...')
-        self.__build_tree_structure()
-        self.logger.info('Layout each root separately...')
-        self.__layout_root()
-        self.logger.info('Plot...')
-        self.__plot()
-        self.logger.info('Draw lineage separators & labels...')
-        self.__lineage_separators_and_lables()
-        self.logger.info('Final cleanup and generate files...')
-        self.__title_cleanup_and_save()
+        if len(self.validated_dataframe) != 0:
+            self.logger.info('Building tree structure...')
+            self.__build_tree_structure()
+            self.logger.info('Layout each root separately...')
+            self.__layout_root()
+            self.logger.info('Plot...')
+            self.__plot()
+            self.logger.info('Draw lineage separators & labels...')
+            self.__lineage_separators_and_lables()
+            self.logger.info('Final cleanup and generate files...')
+            self.__title_cleanup_and_save()
         
 
     def __build_tree_structure(self):

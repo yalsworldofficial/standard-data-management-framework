@@ -1,5 +1,4 @@
 # inbuilt
-import os
 import uuid
 import logging
 import configparser
@@ -46,7 +45,7 @@ class Orchestrator():
         self.logger.info('Generating lineage diagram...')
         self.__generate_lineage_diagram()
         self.logger.info('System has finished processing this batch.')
-        self.logger.warning('Saving logs to specified final log directory, no logs after this point will be ratined in *.log file.')
+        self.logger.warning('Saving logs to specified final log directory, no logs after this point will be retained in *.log file.')
         self.logger.info('==FINAL LOG==')
         self.my_LoggingConfig.move_logs_to_final_location()
         self.my_LoggingConfig.cleanup_final_logs()
@@ -55,7 +54,7 @@ class Orchestrator():
 
     def __generate_lineage_diagram(self):
         my_DataFlowDiagramGenerator = DataFlowDiagramGenerator(
-            validated_dataframe=self.validated_master_specs_df[self.validated_master_specs_df['can_ingest'] == True],
+            validated_dataframe=self.validated_master_specs_df[self.validated_master_specs_df['is_active'] == True],
             config=self.config,
             run_id=self.run_id
         )
@@ -83,15 +82,16 @@ class Orchestrator():
             my_DataLoadController.run()
             load_results = my_DataLoadController.get_load_results()
             obj.adhoc_post_load()
+            all_feed_manifest = obj._finalize()
+            my_ResultGenerator = ResultGenerator(
+                all_feed_manifest, 
+                file_hunt_path=self.file_hunt_path, 
+                run_id=self.run_id, 
+                config=self.config,
+                system_report = self.system_run_report,
+                load_results = load_results
+            )
+            my_ResultGenerator.run()
         else:
             self.logger.warning(f'No feeds passed their defined validation, Data transfer has been cancelled for this run. Please check the run report in SDMF outbound directory with run id: [{self.run_id}]')
-        all_feed_manifest = obj._finalize()
-        my_ResultGenerator = ResultGenerator(
-            all_feed_manifest, 
-            file_hunt_path=self.file_hunt_path, 
-            run_id=self.run_id, 
-            config=self.config,
-            system_report = self.system_run_report,
-            load_results = load_results
-        )
-        my_ResultGenerator.run()
+        
