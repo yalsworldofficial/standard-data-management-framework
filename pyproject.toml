@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdmf"
-version = "0.1.0"
+version = "0.1.1"
 description = "SDMF - Standard Data Management Framework"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
-  { name = "Harsh Handoo", email = "yalsworldofficial@gmail.com" }
+  { name = "Harsh Handoo", email = "handoo.harsh@gmail.com" }
 ]
 
 dependencies = [
