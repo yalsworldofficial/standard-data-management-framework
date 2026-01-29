@@ -2,6 +2,9 @@
 from dataclasses import dataclass
 from typing import Optional
 
+# external
+from pyspark.sql import DataFrame
+
 @dataclass
 class ExtractionResult:
     feed_id: int
@@ -11,6 +14,7 @@ class ExtractionResult:
     end_epoch: float = 0.0
     total_human_readable_time: str = ""
     target_table_path: str = ""
+    data_frame: Optional[DataFrame] = None
     total_rows_inserted: int = 0
     total_rows_updated: int = 0
     total_rows_deleted: int = 0

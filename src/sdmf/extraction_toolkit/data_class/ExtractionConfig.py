@@ -3,5 +3,5 @@ from dataclasses import dataclass
 
 @dataclass
 class ExtractionConfig:
-    ingestion_config: dict
+    config: dict
     target_table: str
