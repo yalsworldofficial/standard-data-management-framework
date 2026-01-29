@@ -52,7 +52,6 @@ class BaseLoadStrategy(ABC):
         """
         try:
             result = self._perform_load()
-            self.post_load_actions(result)
             return result
         except Exception as e:
             raise DataLoadException(
@@ -78,13 +77,7 @@ class BaseLoadStrategy(ABC):
         Should return LoadResult on success.
         """
 
-    def post_load_actions(self, result: LoadResult) -> None:
-        """
-        Emit metrics, notifications, or cleanup.
-        Override to push metrics or alerts.
-        """
-
-    def get_max_table_version(self, table_path_or_name: str) -> int:
+    def __get_max_table_version(self, table_path_or_name: str) -> int:
         """
         Returns the latest version number of a Delta table.
 
@@ -244,7 +237,7 @@ class BaseLoadStrategy(ABC):
                     df.withColumn("_x_operation", F.lit("insert"))
                     .withColumn(
                         "_x_commit_version",
-                        F.lit(self.get_max_table_version(full_table)).cast(LongType()),
+                        F.lit(self.__get_max_table_version(full_table)).cast(LongType()),
                     )
                     .withColumn(
                         "_x_commit_timestamp",
@@ -263,7 +256,7 @@ class BaseLoadStrategy(ABC):
                     f"First load completed (FULL + INCR) | PARTION REBUILD: [{partition_mismatch}]"
                 )
                 return True
-            current_version = self.get_max_table_version(full_table)
+            current_version = self.__get_max_table_version(full_table)
             df.createOrReplaceTempView("incoming_data")
             primary_key = self.config.feed_specs.get("primary_key")
             composite_keys = self.config.feed_specs.get("composite_key", [])
@@ -298,7 +291,7 @@ class BaseLoadStrategy(ABC):
             """
             self.logger.info(merge_query)
             spark.sql(merge_query)
-            new_version = self.get_max_table_version(full_table)
+            new_version = self.__get_max_table_version(full_table)
             self.logger.info(
                 f"Current Version: [{current_version}], New Version after Merge: [{new_version}]"
             )

@@ -13,7 +13,6 @@ from sdmf.data_movement_framework.load_types.SCDType2 import SCDType2
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
-
 class LoadDispatcher():
     def __init__(self, master_spec: dict, spark: SparkSession) -> None:
         self.master_spec = master_spec
@@ -31,8 +30,6 @@ class LoadDispatcher():
         if secs > 0 or not parts:
             parts.append(f"{secs} second{'s' if secs != 1 else ''}")
         return ", ".join(parts[:-1]) + (" and " + parts[-1] if len(parts) > 1 else parts[-1])
-    
-    
 
     def dispatch(self) -> LoadResult:
         self.spark.sparkContext.setLocalProperty(
