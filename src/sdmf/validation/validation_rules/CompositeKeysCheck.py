@@ -16,38 +16,33 @@ class CompositeKeysCheck(ValidationRule):
         
         for json_dict in context.mdf_feed_specs_array:
 
-            data = json_dict['feed_specs_dict']
-
-            value = data.get("composite_key")
-
-            if "composite_key" not in data:
-                raise ValidationError(
-                    message=f"Missing 'composite_key' for feed id {json_dict['feed_id']}",
-                    original_exception=None,
-                    rule_name=self.name
-                )
-
-            if not isinstance(value, list):
-                raise ValidationError(
-                    message=f"'composite_key' must be an list for feed id {json_dict['feed_id']}",
-                    original_exception=None,
-                    rule_name=self.name
-                )
-            
-            table_columns = context._get_table_columns(data, self.name)
-
-            for key in value:
-                if not isinstance(key, str):
+            if json_dict['data_flow_direction'] != 'EXTRACTION':
+                data = json_dict['feed_specs_dict']
+                value = data.get("composite_key")
+                if "composite_key" not in data:
                     raise ValidationError(
-                        message=f"'composite_key' must contain only strings for feed id {json_dict['feed_id']}",
+                        message=f"Missing 'composite_key' for feed id {json_dict['feed_id']}",
                         original_exception=None,
                         rule_name=self.name
                     )
-
-                if key not in table_columns:
+                if not isinstance(value, list):
                     raise ValidationError(
-                        message=f"'composite_key' column '{key}' not found in table "
-                                f"'{data['source_table_name']}'  for feed id {json_dict['feed_id']}",
+                        message=f"'composite_key' must be an list for feed id {json_dict['feed_id']}",
                         original_exception=None,
                         rule_name=self.name
                     )
+                table_columns = context._get_table_columns(data, self.name)
+                for key in value:
+                    if not isinstance(key, str):
+                        raise ValidationError(
+                            message=f"'composite_key' must contain only strings for feed id {json_dict['feed_id']}",
+                            original_exception=None,
+                            rule_name=self.name
+                        )
+                    if key not in table_columns:
+                        raise ValidationError(
+                            message=f"'composite_key' column '{key}' not found in table "
+                                    f"'{data['source_table_name']}'  for feed id {json_dict['feed_id']}",
+                            original_exception=None,
+                            rule_name=self.name
+                        )

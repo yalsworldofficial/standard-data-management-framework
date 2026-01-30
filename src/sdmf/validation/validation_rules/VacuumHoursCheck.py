@@ -16,11 +16,12 @@ class VacuumHoursCheck(ValidationRule):
         
         for json_dict in context.mdf_feed_specs_array:
 
-            value = json_dict['feed_specs_dict'].get("vacuum_hours")
+            if json_dict['data_flow_direction'] != 'EXTRACTION':
 
-            if not isinstance(value, int):
-                raise ValidationError(
-                    message=f"'vacuum_hours' must be an integer for feed id {json_dict['feed_id']}",
-                    original_exception=None,
-                    rule_name=self.name
-                )
+                value = json_dict['feed_specs_dict'].get("vacuum_hours")
+                if not isinstance(value, int):
+                    raise ValidationError(
+                        message=f"'vacuum_hours' must be an integer for feed id {json_dict['feed_id']}",
+                        original_exception=None,
+                        rule_name=self.name
+                    )

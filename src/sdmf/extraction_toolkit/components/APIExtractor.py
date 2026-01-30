@@ -115,7 +115,7 @@ class APIExtractor(BaseExtractor):
         cfg = self.extraction_config.config
         results: list[dict] = []
         page = pagination.get("start_page", 1)
-        max_pages = pagination.get("max_pages", 10_000)
+        max_pages = pagination.get("max_pages", 10000)
         while page <= max_pages:
             params = (cfg.get("params") or {}).copy()
             params[pagination["page_param"]] = page

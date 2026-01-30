@@ -1,0 +1,61 @@
+{
+    "vacuum_hours": 168,
+    "selection_schema": {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "alpha3_b",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "alpha3_t",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "alpha2",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "english",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            }
+        ]
+    },
+    "ingestion_config": {
+        "url": "https://api.example.com/resource",
+        "method": "GET",
+        "headers": {
+            "Authorization": "Bearer <token>"
+        },
+        "params": {
+            "limit": 100
+        },
+        "body": null,
+        "timeout": 30,
+        "retry": {
+            "max_attempts": 5,
+            "backoff_factor": 2.0,
+            "max_backoff": 60,
+            "retry_statuses": [429, 500, 502, 503, 504]
+        },
+        "pagination": {
+            "type": "page",
+            "page_param": "page",
+            "page_size_param": "limit",
+            "page_size": 100,
+            "start_page": 1,
+            "max_pages": 10000,
+            "cursor_param": "cursor",
+            "cursor_path": "next_cursor"
+        },
+        "response_type": "json"
+    }
+}

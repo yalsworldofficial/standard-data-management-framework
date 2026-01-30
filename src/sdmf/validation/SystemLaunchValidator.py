@@ -10,28 +10,42 @@ import pandas as pd
 from sdmf.validation.Validator import Validator
 from sdmf.validation.ValidationContext import ValidationContext
 from sdmf.validation.validation_rules.ValidateMasterSpecs import ValidateMasterSpecs
-from sdmf.validation.validation_rules.EnforceMasterSpecsStructure import EnforceMasterSpecsStructure
+from sdmf.validation.validation_rules.EnforceMasterSpecsStructure import (
+    EnforceMasterSpecsStructure,
+)
 from sdmf.validation.validation_rules.ValidateFeedSpecsJSON import ValidateFeedSpecsJSON
 from sdmf.validation.validation_rules.PrimaryKey import PrimaryKey
-from sdmf.validation.validation_rules.ColumnExistsInSelection import ColumnExistsInSelection
+from sdmf.validation.validation_rules.ColumnExistsInSelection import (
+    ColumnExistsInSelection,
+)
 from sdmf.validation.validation_rules.EnforceStandardChecks import EnforceStandardChecks
-from sdmf.validation.validation_rules.StandardCheckStructureCheck import StandardCheckStructureCheck
-from sdmf.validation.validation_rules.ComprehensiveChecksDependencyDatasetCheck import ComprehensiveChecksDependencyDatasetCheck
+from sdmf.validation.validation_rules.StandardCheckStructureCheck import (
+    StandardCheckStructureCheck,
+)
+from sdmf.validation.validation_rules.ComprehensiveChecksDependencyDatasetCheck import (
+    ComprehensiveChecksDependencyDatasetCheck,
+)
 from sdmf.validation.validation_rules.PartitionKeysCheck import PartitionKeysCheck
 from sdmf.validation.validation_rules.CompositeKeysCheck import CompositeKeysCheck
 from sdmf.validation.validation_rules.VacuumHoursCheck import VacuumHoursCheck
 
-class SystemLaunchValidator():
 
-    def __init__(self, file_hunt_path: str, spark: SparkSession, config: configparser.ConfigParser) -> None:
+class SystemLaunchValidator:
+
+    def __init__(
+        self,
+        file_hunt_path: str,
+        spark: SparkSession,
+        config: configparser.ConfigParser,
+    ) -> None:
         self.logger = logging.getLogger(__name__)
         self.spark = spark
         self.config = config
 
         self.context = ValidationContext(
             spark=spark,
-            file_hunt_path = file_hunt_path,
-            master_spec_name = self.config['FILES']['master_spec_name']
+            file_hunt_path=file_hunt_path,
+            master_spec_name=self.config["FILES"]["master_spec_name"],
         )
 
     def __init_rules(self):
@@ -46,7 +60,7 @@ class SystemLaunchValidator():
             VacuumHoursCheck(),
             EnforceStandardChecks(),
             StandardCheckStructureCheck(),
-            ComprehensiveChecksDependencyDatasetCheck()
+            ComprehensiveChecksDependencyDatasetCheck(),
         ]
 
     def run(self):
@@ -56,6 +70,5 @@ class SystemLaunchValidator():
 
     def get_validated_master_specs(self) -> pd.DataFrame:
         opt_df = self.context.get_master_specs()
-        opt_df = opt_df[opt_df['is_active'] == True]
+        opt_df = opt_df[opt_df["is_active"] == True]
         return opt_df
-
