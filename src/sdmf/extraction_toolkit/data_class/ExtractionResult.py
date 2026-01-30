@@ -16,6 +16,4 @@ class ExtractionResult:
     target_table_path: str = ""
     data_frame: Optional[DataFrame] = None
     total_rows_inserted: int = 0
-    total_rows_updated: int = 0
-    total_rows_deleted: int = 0
     exception_if_any: Optional[Exception] = None

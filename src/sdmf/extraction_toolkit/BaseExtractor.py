@@ -3,7 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 
 # external
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 
 # internal
 from sdmf.extraction_toolkit.data_class.ExtractionConfig import ExtractionConfig
