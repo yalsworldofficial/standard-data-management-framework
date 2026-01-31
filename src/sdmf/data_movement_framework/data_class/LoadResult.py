@@ -2,6 +2,9 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+# external
+from pyspark.sql import DataFrame
+
 
 @dataclass
 class LoadResult:
@@ -11,6 +14,7 @@ class LoadResult:
     start_epoch: float = 0.0
     end_epoch: float = 0.0
     total_human_readable_time: str = ""
+    data_frame: Optional[DataFrame] = None
     source_table_path: str = ""
     target_table_path: str = ""
     data_flow_direction: str = ""

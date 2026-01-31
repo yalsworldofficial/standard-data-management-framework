@@ -6,25 +6,35 @@ import requests
 from requests.exceptions import RequestException
 
 # external
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import StructType
 
 # internal
-from sdmf.extraction_toolkit.BaseExtractor import BaseExtractor
-from sdmf.extraction_toolkit.data_class.ExtractionConfig import ExtractionConfig
-from sdmf.extraction_toolkit.data_class.ExtractionResult import ExtractionResult
+from sdmf.data_movement_framework.BaseLoadStrategy import BaseLoadStrategy
+from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
+from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
+
 from sdmf.exception.ExtractionException import ExtractionException
 
 
-class APIExtractor(BaseExtractor):
+class APIExtractor(BaseLoadStrategy):
 
-    def __init__(self, extraction_config: ExtractionConfig, spark: SparkSession) -> None:
-        super().__init__(extraction_config=extraction_config, spark=spark)
+    def __init__(self, config: LoadConfig, spark: SparkSession) -> None:
+        super().__init__(config=config, spark=spark)
         self.logger = logging.getLogger(__name__)
-        self.extraction_config = extraction_config
+        self.config = config
         self.spark = spark
 
-    def extract(self) -> ExtractionResult:
+    def load(self) -> LoadResult:
+        result_df = self.__extract()
+        return LoadResult(
+            feed_id=self.config.master_specs['feed_id'],
+            success=True,
+            skipped=False,
+            data_frame=result_df
+        )
+
+    def __extract(self) -> DataFrame:
         """
         Core load logic implemented by subclass.
         Should return IngestionResult on success.
@@ -80,17 +90,12 @@ class APIExtractor(BaseExtractor):
         """
         try:
             records = self.__fetch_all_pages()
-            schema = StructType.fromJson(self.extraction_config.feed_specs['selection_schema'])
+            schema = StructType.fromJson(self.config.feed_specs['selection_schema'])
             if not records:
                 df = self.spark.createDataFrame([], schema=schema)
             else:
                 df = self.spark.createDataFrame(records, schema=schema)
-            return ExtractionResult(
-                feed_id=self.extraction_config.master_specs['feed_id'],
-                success=True,
-                skipped=False,
-                data_frame=df
-            )
+            return df
         except Exception as exc:
             raise ExtractionException(
                 message="Something went wrong while running API Extractor",
@@ -98,7 +103,7 @@ class APIExtractor(BaseExtractor):
             )
 
     def __fetch_all_pages(self) -> list[dict]:
-        cfg = self.extraction_config.config
+        cfg = self.config.feed_specs
         pagination = cfg.get("pagination")
         if not pagination:
             response = self.__fetch_response()
@@ -112,7 +117,7 @@ class APIExtractor(BaseExtractor):
         raise ValueError(f"Unsupported pagination type: {pagination_type}")
 
     def __page_based_fetch(self, pagination: dict) -> list[dict]:
-        cfg = self.extraction_config.config
+        cfg = self.config.feed_specs
         results: list[dict] = []
         page = pagination.get("start_page", 1)
         max_pages = pagination.get("max_pages", 10000)
@@ -132,7 +137,7 @@ class APIExtractor(BaseExtractor):
         return results
 
     def __cursor_based_fetch(self, pagination: dict) -> list[dict]:
-        cfg = self.extraction_config.config
+        cfg = self.config.feed_specs
         results: list[dict] = []
         cursor = None
         while True:
@@ -159,7 +164,7 @@ class APIExtractor(BaseExtractor):
         raise ValueError(f"Unsupported JSON payload type: {type(payload)}")
 
     def __fetch_response(self) -> requests.Response:
-        cfg = self.extraction_config.config
+        cfg = self.config.feed_specs
         retry_cfg = cfg.get("retry", {})
 
         max_attempts = retry_cfg.get("max_attempts", 3)

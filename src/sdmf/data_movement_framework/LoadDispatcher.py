@@ -10,6 +10,8 @@ from sdmf.data_movement_framework.load_types.FullLoad import FullLoad
 from sdmf.data_movement_framework.load_types.AppendLoad import AppendLoad
 from sdmf.data_movement_framework.load_types.IncrementalCDC import IncrementalCDC
 from sdmf.data_movement_framework.load_types.SCDType2 import SCDType2
+from sdmf.data_movement_framework.load_types.APIExtractor import APIExtractor
+
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
@@ -37,6 +39,7 @@ class LoadDispatcher():
             f"group_{self.master_spec['parallelism_group_number']}"
         )
         start_time = time.time()
+        # is_extraction = True if self.master_spec.get('data_flow_direction', "") == 'EXTRACTION' else False
         config = LoadConfig(
             master_specs=self.master_spec,
             feed_specs=json.loads(self.master_spec.get('feed_specs', '{}')),
@@ -48,7 +51,10 @@ class LoadDispatcher():
             'FULL_LOAD': FullLoad,
             "APPEND_LOAD": AppendLoad,
             "INCREMENTAL_CDC": IncrementalCDC,
-            "SCD_TYPE_2": SCDType2
+            "SCD_TYPE_2": SCDType2,
+
+            # extraction
+            "API_EXTRACTOR": APIExtractor
         }
 
         load_class = load_type_map.get(self.master_spec.get('load_type', ""))

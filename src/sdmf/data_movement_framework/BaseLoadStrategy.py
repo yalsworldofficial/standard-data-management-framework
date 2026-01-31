@@ -27,48 +27,43 @@ class BaseLoadStrategy(ABC):
         self.spark = spark
         self.logger = logging.getLogger(__name__)
         if self.config.target_unity_catalog == "testing":
-            self._current_target_table_name = f"{self.config.target_schema_name}.{self.config.target_table_name}"
+            self._current_target_table_name = (
+                f"{self.config.target_schema_name}.{self.config.target_table_name}"
+            )
             self._staging_schema = f"staging"
         else:
             self._current_target_table_name = f"{self.config.target_unity_catalog}.{self.config.target_schema_name}.{self.config.target_table_name}"
             self._staging_schema = f"{self.config.target_unity_catalog}.staging"
 
-        self.logger.info(f"Current Table Name: {self._current_target_table_name}, Staging Schema: {self._staging_schema}")
+        self.logger.info(
+            f"Current Table Name: {self._current_target_table_name}, Staging Schema: {self._staging_schema}"
+        )
 
     def _enforce_schema(self, df: DataFrame, schema: StructType):
         return df.select(
             *[
-                F.col(f.name).cast(f.dataType).alias(f.name)
-                if f.name in df.columns
-                else F.lit(None).cast(f.dataType).alias(f.name)
+                (
+                    F.col(f.name).cast(f.dataType).alias(f.name)
+                    if f.name in df.columns
+                    else F.lit(None).cast(f.dataType).alias(f.name)
+                )
                 for f in schema.fields
             ]
         )
-
 
     def execute(self) -> LoadResult:
         """
         Orchestrates the load lifecycle:
         """
         try:
-            result = self._perform_load()
+            result = self.load()
             return result
         except Exception as e:
             raise DataLoadException(
                 message="Somethine went wrong while executing data load",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e
+                original_exception=e,
             )
-
-    def _perform_load(self) -> LoadResult:
-        """
-        Calls the subclass load implementation and ensures commit/rollback semantics.
-        No retries are performed here; any exception will bubble up to execute.
-        """
-        try:
-            return self.load()
-        except Exception as e:
-            return LoadResult(feed_id=self.config.master_specs['feed_id'], success=False)
 
     @abstractmethod
     def load(self) -> LoadResult:
@@ -111,7 +106,6 @@ class BaseLoadStrategy(ABC):
             f"{staging_schema}.t_incr_cdf_changes_{self.config.target_table_name}"
         )
 
-        
         self.logger.info(
             (
                 "\n=== Staging Layer Creation ===\n"
@@ -213,9 +207,9 @@ class BaseLoadStrategy(ABC):
                 writer = df.write.format("delta").mode("overwrite")
                 if partition_mismatch:
                     writer = writer.option("overwriteSchema", "true")
-                writer.partitionBy(*self.config.feed_specs["partition_keys"]).saveAsTable(
-                    full_table
-                )
+                writer.partitionBy(
+                    *self.config.feed_specs["partition_keys"]
+                ).saveAsTable(full_table)
                 if (
                     self.config.feed_specs["selection_query"] == ""
                     or self.config.feed_specs["selection_query"] == None
@@ -237,7 +231,9 @@ class BaseLoadStrategy(ABC):
                     df.withColumn("_x_operation", F.lit("insert"))
                     .withColumn(
                         "_x_commit_version",
-                        F.lit(self.__get_max_table_version(full_table)).cast(LongType()),
+                        F.lit(self.__get_max_table_version(full_table)).cast(
+                            LongType()
+                        ),
                     )
                     .withColumn(
                         "_x_commit_timestamp",
@@ -313,7 +309,7 @@ class BaseLoadStrategy(ABC):
                 .select("post.*")
                 .withColumn("_x_operation", F.lit("update"))
             )
-            
+
             true_inserts = cdf_df.filter("_change_type = 'insert'").withColumn(
                 "_x_operation", F.lit("insert")
             )
@@ -370,7 +366,7 @@ class BaseLoadStrategy(ABC):
             raise DataLoadException(
                 message=f"Error in staging layer for {self.config.feed_specs['source_table_name']}",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e
+                original_exception=e,
             )
 
     def _enforce_load_type_consistency(self) -> None:
@@ -401,7 +397,7 @@ class BaseLoadStrategy(ABC):
                                 f"Switching load types is not permitted."
                             ),
                             load_type=self.config.master_specs["load_type"],
-                            original_exception=None
+                            original_exception=None,
                         )
                     else:
                         self.logger.info(
@@ -423,5 +419,5 @@ class BaseLoadStrategy(ABC):
             raise DataLoadException(
                 message="Something went wrong while enforcing load type consistency",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e
+                original_exception=e,
             )
