@@ -12,10 +12,8 @@ from pyspark.sql.types import StructType
 
 # internal
 from sdmf.data_movement_framework.BaseLoadStrategy import BaseLoadStrategy
-from sdmf.data_movement_framework.load_types.FullLoad import FullLoad
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
-
 from sdmf.exception.ExtractionException import ExtractionException
 
 
@@ -26,7 +24,6 @@ class APIExtractorJSON(BaseLoadStrategy):
         self.logger = logging.getLogger(__name__)
         self.config = config
         self.spark = spark
-
         if self.config.target_unity_catalog == "testing":
             self.__bronze_schema = f"bronze"
         else:
@@ -35,22 +32,26 @@ class APIExtractorJSON(BaseLoadStrategy):
     def load(self) -> LoadResult:
         result_df = self.__extract()
         self.spark.sql(f"CREATE SCHEMA IF NOT EXISTS {self.__bronze_schema}")
-        feed_temp = f'{self.__bronze_schema}.{self.config.master_specs['feed_id']}_{self.config.master_specs['feed_name']}'
+        feed_temp = f'{self.__bronze_schema}.t_{self.config.master_specs['feed_id']}_{self.config.master_specs['feed_name']}'
+        self.logger.info(f"Creating bronze table: {feed_temp}")
         self.config.feed_specs["source_table_name"] = feed_temp
         self.config.feed_specs["selection_query"] = None
+        result_df = self._enforce_schema(result_df, StructType.fromJson(self.config.feed_specs['selection_schema']))
+        result_df.printSchema()
+
         (
             result_df.write.
             format("delta")
             .mode("overwrite")
-            .option("overwriteSchema", "true")
             .saveAsTable(feed_temp)
         )
-        my_full_load = FullLoad(
-            config=self.config,
-            spark=self.spark
+        return LoadResult(
+            feed_id = self.config.master_specs['feed_id'],
+            success=True, 
+            total_rows_inserted=result_df.count(),
+            total_rows_updated=0,
+            total_rows_deleted=0
         )
-        res = my_full_load.load()
-        return res
 
     def __extract(self) -> DataFrame:
         """

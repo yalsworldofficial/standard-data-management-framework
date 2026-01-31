@@ -33,4 +33,4 @@ spark = (
 
 
 
-spark.sql('select * from demo.t_country_codes limit 100').show()
+spark.sql('describe history bronze.t_1_some_test_feed').show()
