@@ -4,20 +4,22 @@ import random
 import logging
 import requests
 from requests.exceptions import RequestException
+from typing import Any
 
 # external
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import SparkSession, DataFrame, Row
 from pyspark.sql.types import StructType
 
 # internal
 from sdmf.data_movement_framework.BaseLoadStrategy import BaseLoadStrategy
+from sdmf.data_movement_framework.load_types.FullLoad import FullLoad
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
 from sdmf.exception.ExtractionException import ExtractionException
 
 
-class APIExtractor(BaseLoadStrategy):
+class APIExtractorJSON(BaseLoadStrategy):
 
     def __init__(self, config: LoadConfig, spark: SparkSession) -> None:
         super().__init__(config=config, spark=spark)
@@ -25,14 +27,30 @@ class APIExtractor(BaseLoadStrategy):
         self.config = config
         self.spark = spark
 
+        if self.config.target_unity_catalog == "testing":
+            self.__bronze_schema = f"bronze"
+        else:
+            self.__bronze_schema = f"{self.config.target_unity_catalog}.bronze"
+
     def load(self) -> LoadResult:
         result_df = self.__extract()
-        return LoadResult(
-            feed_id=self.config.master_specs['feed_id'],
-            success=True,
-            skipped=False,
-            data_frame=result_df
+        self.spark.sql(f"CREATE SCHEMA IF NOT EXISTS {self.__bronze_schema}")
+        feed_temp = f'{self.__bronze_schema}.{self.config.master_specs['feed_id']}_{self.config.master_specs['feed_name']}'
+        self.config.feed_specs["source_table_name"] = feed_temp
+        self.config.feed_specs["selection_query"] = None
+        (
+            result_df.write.
+            format("delta")
+            .mode("overwrite")
+            .option("overwriteSchema", "true")
+            .saveAsTable(feed_temp)
         )
+        my_full_load = FullLoad(
+            config=self.config,
+            spark=self.spark
+        )
+        res = my_full_load.load()
+        return res
 
     def __extract(self) -> DataFrame:
         """
@@ -86,15 +104,15 @@ class APIExtractor(BaseLoadStrategy):
             # --------------------
             "response_type": "json"
         }
-
         """
         try:
             records = self.__fetch_all_pages()
             schema = StructType.fromJson(self.config.feed_specs['selection_schema'])
             if not records:
-                df = self.spark.createDataFrame([], schema=schema)
+                df = self.spark.createDataFrame([], schema)
             else:
-                df = self.spark.createDataFrame(records, schema=schema)
+                rows = [Row(**r) for r in records]
+                df = self.spark.createDataFrame(rows, schema)
             return df
         except Exception as exc:
             raise ExtractionException(
@@ -102,9 +120,9 @@ class APIExtractor(BaseLoadStrategy):
                 original_exception=exc
             )
 
-    def __fetch_all_pages(self) -> list[dict]:
-        cfg = self.config.feed_specs
-        pagination = cfg.get("pagination")
+    def __fetch_all_pages(self) -> list[dict[str, Any]]:
+        cfg = self.config.feed_specs['ingestion_config']
+        pagination = cfg.get("pagination", None)
         if not pagination:
             response = self.__fetch_response()
             payload = response.json()
@@ -116,8 +134,8 @@ class APIExtractor(BaseLoadStrategy):
             return self.__cursor_based_fetch(pagination)
         raise ValueError(f"Unsupported pagination type: {pagination_type}")
 
-    def __page_based_fetch(self, pagination: dict) -> list[dict]:
-        cfg = self.config.feed_specs
+    def __page_based_fetch(self, pagination: dict) -> list[dict[str, Any]]:
+        cfg = self.config.feed_specs['ingestion_config']
         results: list[dict] = []
         page = pagination.get("start_page", 1)
         max_pages = pagination.get("max_pages", 10000)
@@ -136,8 +154,8 @@ class APIExtractor(BaseLoadStrategy):
             page += 1
         return results
 
-    def __cursor_based_fetch(self, pagination: dict) -> list[dict]:
-        cfg = self.config.feed_specs
+    def __cursor_based_fetch(self, pagination: dict) -> list[dict[str, Any]]:
+        cfg = self.config.feed_specs['ingestion_config']
         results: list[dict] = []
         cursor = None
         while True:
@@ -154,7 +172,7 @@ class APIExtractor(BaseLoadStrategy):
                 break
         return results
 
-    def __normalize_payload(self, payload) -> list[dict]:
+    def __normalize_payload(self, payload) -> list[dict[str, Any]]:
         if isinstance(payload, list):
             return payload
         if isinstance(payload, dict):
@@ -164,7 +182,7 @@ class APIExtractor(BaseLoadStrategy):
         raise ValueError(f"Unsupported JSON payload type: {type(payload)}")
 
     def __fetch_response(self) -> requests.Response:
-        cfg = self.config.feed_specs
+        cfg = self.config.feed_specs['ingestion_config']
         retry_cfg = cfg.get("retry", {})
 
         max_attempts = retry_cfg.get("max_attempts", 3)

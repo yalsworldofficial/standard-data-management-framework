@@ -79,6 +79,21 @@ class Orchestrator:
                 details=None,
                 original_exception=None,
             )
+        extraction_df = self.validated_master_specs_df[
+            self.validated_master_specs_df['data_flow_direction'] == 'EXTRACTION'
+        ]
+        load_results = []
+        if len(extraction_df) != 0:
+            self.logger.info('Performing extraction as configured...')
+            my_DataLoadController = DataLoadController(
+                allowed_df=extraction_df, spark=self.spark, config=self.config
+            )
+            my_DataLoadController.run()
+            res = my_DataLoadController.get_load_results()
+            load_results.extend(res)
+        self.validated_master_specs_df = self.validated_master_specs_df[
+            self.validated_master_specs_df['data_flow_direction'] != 'EXTRACTION'
+        ]
         obj = FeedDataQualityRunner(
             self.spark, self.validated_master_specs_df.to_dict(orient="records")
         )
@@ -89,7 +104,6 @@ class Orchestrator:
             if ready_for_ingest["can_ingest"] == True:
                 can_ingest_feed_id.append(ready_for_ingest["feed_id"])
         self.logger.info(f"Valid Feed ID's: {can_ingest_feed_id}")
-        load_results = []
         if len(can_ingest_feed_id) > 0:
             allowed_df = self.validated_master_specs_df[
                 self.validated_master_specs_df["feed_id"].isin(can_ingest_feed_id)
@@ -112,5 +126,6 @@ class Orchestrator:
             my_ResultGenerator.run()
         else:
             self.logger.warning(
-                f"No feeds passed their defined validation, Data transfer has been cancelled for this run. Please check the run report in SDMF outbound directory with run id: [{self.run_id}]"
+                f"No non-Extraction feeds passed their defined validation. Please check the run report in SDMF outbound directory with run id: [{self.run_id}]"
             )
+            

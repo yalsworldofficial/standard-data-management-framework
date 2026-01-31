@@ -83,7 +83,12 @@ class EnforceMasterSpecsStructure(ValidationRule):
                 rule_name=self.name,
             )
         else:
-            all_feed_specs = context.master_specs_dataframe['feed_specs'].to_list()
+
+            filtered_df = context.master_specs_dataframe[
+                context.master_specs_dataframe['data_flow_direction'] != 'EXTRACTION'
+            ]
+
+            all_feed_specs = filtered_df['feed_specs'].to_list()
             for feed_specs in all_feed_specs:
                 feed_specs_dict = json.loads(feed_specs)
                 required_keys = [
