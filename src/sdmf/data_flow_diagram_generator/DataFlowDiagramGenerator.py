@@ -4,14 +4,12 @@ import logging
 import configparser
 from collections import defaultdict
 
-
 # external
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, FancyArrow
 import pandas as pd
 
 class DataFlowDiagramGenerator():
-
 
     def __init__(self, validated_dataframe: pd.DataFrame, config: configparser.ConfigParser, run_id: str) -> None:
         self.config = config
@@ -42,7 +40,6 @@ class DataFlowDiagramGenerator():
             self.__lineage_separators_and_lables()
             self.logger.info('Final cleanup and generate files...')
             self.__title_cleanup_and_save()
-        
 
     def __build_tree_structure(self):
         self.children = defaultdict(list)
