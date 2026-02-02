@@ -1,0 +1,75 @@
+{
+    "vacuum_hours": 168,
+    "partition_keys": [],
+    "selection_schema": {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "alpha3_b",
+                "type": "string",
+                "nullable": false,
+                "metadata": {}
+            },
+            {
+                "name": "alpha3_t",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "alpha2",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "english_label",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            }
+        ]
+    },
+    "ingestion_config": {
+        "request": {
+            "url": "https://hub.huwise.com/api/explore/v2.1/catalog/datasets/iso-language-codes-639-1-and-639-2/exports/parquet/",
+            "method": "GET",
+            "headers": {},
+            "params": {
+                "lang": "en",
+                "timezone": "Asia/Calcutta"
+            },
+            "body": null,
+            "timeout": 30
+        },
+        "response": {
+            "format": "parquet",
+            "content_type": "application/parquet",
+            "compression": "none",
+            "file_layout": "single",
+            "infer_schema": true
+        },
+        "retry": {
+            "enabled": true,
+            "max_attempts": 3,
+            "backoff_factor": 2.0,
+            "max_backoff": 30,
+            "retry_statuses": [
+                429,
+                500,
+                502,
+                503,
+                504
+            ]
+        },
+        "deduplication": {
+            "enabled": false
+        },
+        "metadata": {
+            "source": "huwise",
+            "feed_type": "api",
+            "owner": "data-platform",
+            "sla": "daily"
+        }
+    }
+}

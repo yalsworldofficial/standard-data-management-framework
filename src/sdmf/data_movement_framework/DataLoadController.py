@@ -49,7 +49,7 @@ class DataLoadController:
 
                 futures = [
                     executor.submit(
-                        LoadDispatcher(master_spec=feed, spark=self.spark).dispatch
+                        LoadDispatcher(master_spec=feed, spark=self.spark, config=self.config).dispatch
                     )
                     for feed in feeds
                 ]
@@ -60,7 +60,7 @@ class DataLoadController:
         else:
             feed = feeds[0]
             results.append(
-                LoadDispatcher(master_spec=feed, spark=self.spark).dispatch()
+                LoadDispatcher(master_spec=feed, spark=self.spark, config=self.config).dispatch()
             )
 
         return results

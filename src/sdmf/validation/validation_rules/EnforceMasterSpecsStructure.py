@@ -85,7 +85,7 @@ class EnforceMasterSpecsStructure(ValidationRule):
         else:
 
             filtered_df = context.master_specs_dataframe[
-                context.master_specs_dataframe['data_flow_direction'] != 'EXTRACTION'
+                context.master_specs_dataframe['data_flow_direction'] != 'SOURCE_TO_BRONZE'
             ]
 
             all_feed_specs = filtered_df['feed_specs'].to_list()

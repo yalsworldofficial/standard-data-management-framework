@@ -15,7 +15,7 @@ class ComprehensiveDQExecutor:
     def run(self, feed_spec: dict, is_post_load: bool = False) -> tuple:
         has_errors = False
         check_result = []
-        self.logger.info(f"Running {"POST_LOAD" if is_post_load else "PRE_LOAD"}PRE_LOAD comprehensive DQ checks")
+        self.logger.info(f"Running {"POST_LOAD" if is_post_load else "PRE_LOAD"} comprehensive DQ checks")
         for check in feed_spec.get("comprehensive_checks", []):
             if is_post_load == True and check.get("load_stage") == "PRE_LOAD":
                 continue

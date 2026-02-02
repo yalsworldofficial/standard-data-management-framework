@@ -46,7 +46,7 @@ spark = (
 # )
 # print(df.count())
 # # Recreate table
-# spark.sql("CREATE DATABASE IF NOT EXISTS demo")
+spark.sql("CREATE DATABASE IF NOT EXISTS silver")
 # spark.sql("DROP TABLE IF EXISTS demo.customers")
 # df.write \
 #     .format("delta") \

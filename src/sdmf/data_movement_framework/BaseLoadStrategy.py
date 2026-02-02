@@ -1,4 +1,5 @@
 # inbuilt
+import re
 import uuid
 import logging
 from abc import ABC, abstractmethod
@@ -38,6 +39,24 @@ class BaseLoadStrategy(ABC):
         self.logger.info(
             f"Current Table Name: {self._current_target_table_name}, Staging Schema: {self._staging_schema}"
         )
+
+    def _normalize_column_names(self, df: DataFrame) -> DataFrame:
+        for col in df.columns:
+            clean = col.strip().lower()
+
+            # replace anything not a–z, 0–9, _ with _
+            clean = re.sub(r"[^a-z0-9_]", "_", clean)
+
+            # collapse multiple underscores
+            clean = re.sub(r"_+", "_", clean)
+
+            # optional: remove leading/trailing underscores
+            clean = clean.strip("_")
+
+            if clean != col:
+                df = df.withColumnRenamed(col, clean)
+
+        return df
 
     def _enforce_schema(self, df: DataFrame, schema: StructType):
         return df.select(

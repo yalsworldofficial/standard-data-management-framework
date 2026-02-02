@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 spark-warehouse/
 metastore_db/
+temp/
 spark_warehouse/
 sdmf_outbound/
 # C extensions

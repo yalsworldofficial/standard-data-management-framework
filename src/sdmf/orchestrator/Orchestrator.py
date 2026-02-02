@@ -36,41 +36,58 @@ class Orchestrator:
             f'Is FAIR: {spark.sparkContext.getConf().get("spark.scheduler.mode")}'
         )
 
-    def __system_prerequisites(self):
+    def __system_prerequisites(self) -> bool:
         my_SystemLaunchValidator = SystemLaunchValidator(
             file_hunt_path=self.file_hunt_path, spark=self.spark, config=self.config
         )
         validation_result = my_SystemLaunchValidator.run()
+        
         self.validated_master_specs_df = (
             my_SystemLaunchValidator.get_validated_master_specs()
         )
+        self.validated_master_specs_df2 = (
+            my_SystemLaunchValidator.get_validated_master_specs()
+        )
         self.system_run_report = validation_result.results_df
+        return validation_result.passed
+            
 
     def run(self):
         self.logger.info("Ensuring system readiness...")
-        self.__system_prerequisites()
-        self.logger.info("System is up and ready.")
-        self.logger.info("Validating and loading data...")
-        self.__validate_and_load()
-        self.logger.info("Generating lineage diagram...")
-        self.__generate_lineage_diagram()
-        self.logger.info("System has finished processing this batch.")
-        self.logger.warning(
-            "Saving logs to specified final log directory, no logs after this point will be retained in *.log file."
-        )
-        self.logger.info("==FINAL LOG==")
-        self.my_LoggingConfig.move_logs_to_final_location()
-        self.my_LoggingConfig.cleanup_final_logs()
-        self.logger.info("System has finished processing data.")
-        self.logger.info("Thanks for using SDMF.")
+        is_system_ready = self.__system_prerequisites()
+        if is_system_ready == True:
+
+            self.logger.info("System is up and ready.")
+            self.logger.info("Validating and loading data...")
+            self.__validate_and_load()
+            self.logger.info("Generating lineage diagram...")
+            self.__generate_lineage_diagram()
+            self.logger.info("System has finished processing this batch.")
+            self.logger.warning(
+                "Saving logs to specified final log directory, no logs after this point will be retained in *.log file."
+            )
+            self.logger.info("==FINAL LOG==")
+            self.my_LoggingConfig.move_logs_to_final_location()
+            self.my_LoggingConfig.cleanup_final_logs()
+            self.logger.info("System has finished processing data.")
+            self.logger.info("Thanks for using SDMF.")
+        else:
+            self.logger.error("System is not ready, feeds will not be processed.")
 
     def __generate_lineage_diagram(self):
-        my_DataFlowDiagramGenerator = DataFlowDiagramGenerator(
-            validated_dataframe=self.validated_master_specs_df,
-            config=self.config,
-            run_id=self.run_id,
-        )
-        my_DataFlowDiagramGenerator.run()
+        try:
+            my_DataFlowDiagramGenerator = DataFlowDiagramGenerator(
+                validated_dataframe=self.validated_master_specs_df2,
+                config=self.config,
+                run_id=self.run_id,
+            )
+            my_DataFlowDiagramGenerator.run()
+        except Exception as e:
+            raise SystemError(
+                "Something went wrong while generating Lineage diagram",
+                details={},
+                original_exception=e
+            )
 
     def __validate_and_load(self):
         if self.validated_master_specs_df is None:
@@ -80,7 +97,7 @@ class Orchestrator:
                 original_exception=None,
             )
         extraction_df = self.validated_master_specs_df[
-            self.validated_master_specs_df['data_flow_direction'] == 'EXTRACTION'
+            self.validated_master_specs_df['data_flow_direction'] == 'SOURCE_TO_BRONZE'
         ]
         load_results = []
         if len(extraction_df) != 0:
@@ -92,7 +109,7 @@ class Orchestrator:
             res = my_DataLoadController.get_load_results()
             load_results.extend(res)
         self.validated_master_specs_df = self.validated_master_specs_df[
-            self.validated_master_specs_df['data_flow_direction'] != 'EXTRACTION'
+            self.validated_master_specs_df['data_flow_direction'] != 'SOURCE_TO_BRONZE'
         ]
         obj = FeedDataQualityRunner(
             self.spark, self.validated_master_specs_df.to_dict(orient="records")

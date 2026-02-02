@@ -1,6 +1,7 @@
 # inbuilt
 import json
 import time
+import configparser
 
 # external
 from pyspark.sql import SparkSession
@@ -10,14 +11,15 @@ from sdmf.data_movement_framework.load_types.FullLoad import FullLoad
 from sdmf.data_movement_framework.load_types.AppendLoad import AppendLoad
 from sdmf.data_movement_framework.load_types.IncrementalCDC import IncrementalCDC
 from sdmf.data_movement_framework.load_types.SCDType2 import SCDType2
-from sdmf.data_movement_framework.load_types.APIExtractorJSON import APIExtractorJSON
+from sdmf.data_movement_framework.load_types.APIExtractor import APIExtractor
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
 class LoadDispatcher():
-    def __init__(self, master_spec: dict, spark: SparkSession) -> None:
+    def __init__(self, master_spec: dict, spark: SparkSession, config: configparser.ConfigParser) -> None:
         self.master_spec = master_spec
         self.spark = spark
+        self.config = config
 
     def __format_duration(self, seconds: float) -> str:
         seconds = round(seconds, 2)
@@ -40,6 +42,7 @@ class LoadDispatcher():
         start_time = time.time()
         # is_extraction = True if self.master_spec.get('data_flow_direction', "") == 'EXTRACTION' else False
         config = LoadConfig(
+            config=self.config,
             master_specs=self.master_spec,
             feed_specs=json.loads(self.master_spec.get('feed_specs', '{}')),
             target_unity_catalog= self.master_spec.get('target_unity_catalog', ""),
@@ -53,7 +56,7 @@ class LoadDispatcher():
             "SCD_TYPE_2": SCDType2,
 
             # extraction
-            "API_EXTRACTOR_JSON": APIExtractorJSON
+            "API_EXTRACTOR": APIExtractor
         }
 
         load_class = load_type_map.get(self.master_spec.get('load_type', ""))

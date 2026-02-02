@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 @dataclass
 class LoadConfig:
+    config: configparser.ConfigParser
     feed_specs: dict
     master_specs: dict
     target_unity_catalog: str

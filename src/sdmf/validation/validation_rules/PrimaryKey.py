@@ -16,7 +16,7 @@ class PrimaryKey(ValidationRule):
         
         for json_dict in context.mdf_feed_specs_array:
 
-            if json_dict['data_flow_direction'] != 'EXTRACTION':
+            if json_dict['data_flow_direction'] != 'SOURCE_TO_BRONZE':
 
                 feed_specs_dict = json_dict['feed_specs_dict']
 
@@ -34,14 +34,16 @@ class PrimaryKey(ValidationRule):
                         original_exception=None,
                         rule_name=self.name
                     )
+                
+                if context.spark.catalog.tableExists(feed_specs_dict['source_table_name']):
 
-                table_columns = context._get_table_columns(feed_specs_dict, self.name)
-                if pk not in table_columns:
-                    raise ValidationError(
-                        message=f"primary_key '{pk}' not found in table '{feed_specs_dict['source_table_name']}' for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name
-                    )                
+                    table_columns = context._get_table_columns(feed_specs_dict, self.name)
+                    if pk not in table_columns:
+                        raise ValidationError(
+                            message=f"primary_key '{pk}' not found in table '{feed_specs_dict['source_table_name']}' for feed id {json_dict['feed_id']}",
+                            original_exception=None,
+                            rule_name=self.name
+                        )                
         
 
 

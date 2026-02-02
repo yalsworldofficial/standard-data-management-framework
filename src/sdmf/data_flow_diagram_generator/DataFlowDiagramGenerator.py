@@ -84,26 +84,39 @@ class DataFlowDiagramGenerator():
     def __plot(self):
         fig, self.ax = plt.subplots(figsize=(80, max(10, len(self.validated_dataframe) * 2)))
         for fid, (x, y) in self.positions.items():
+
+            # 🔴 Root / first block styling
+            if fid in self.roots:
+                facecolor = "#C0392B"   # red
+                text_color = "white"
+            else:
+                facecolor = "#D6EAF8"   # default blue
+                text_color = "black"
+
             rect = Rectangle(
                 (x, y),
                 self.BOX_WIDTH,
                 self.BOX_HEIGHT,
                 edgecolor="black",
-                facecolor="#D6EAF8",
+                facecolor=facecolor,
                 linewidth=1.6
             )
             self.ax.add_patch(rect)
 
+            label = f"{fid}: {self.name_map[fid]}"
+
             self.ax.text(
                 x + self.BOX_WIDTH / 2,
                 y + self.BOX_HEIGHT / 2,
-                self.name_map[fid],
+                label,
                 ha="center",
                 va="center",
                 fontsize=20,
                 fontweight="bold",
+                color=text_color,
                 wrap=True
             )
+
         for _, r in self.validated_dataframe.iterrows():
             if r.parent_feed_id != 0:
                 px, py = self.positions[r.parent_feed_id]

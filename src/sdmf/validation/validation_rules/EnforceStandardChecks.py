@@ -16,7 +16,7 @@ class EnforceStandardChecks(ValidationRule):
             )
 
         for json_dict in context.mdf_feed_specs_array:
-            if json_dict["data_flow_direction"] != "EXTRACTION":
+            if json_dict["data_flow_direction"] != "SOURCE_TO_BRONZE":
                 data = json_dict["feed_specs_dict"]
                 if data is None:
                     raise ValidationError(

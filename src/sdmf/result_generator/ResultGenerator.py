@@ -18,7 +18,15 @@ from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
 class ResultGenerator():
 
-    def __init__(self, payload: list[dict], file_hunt_path: str, run_id: str, config: configparser.ConfigParser, system_report: pd.DataFrame, load_results: list[LoadResult]) -> None:
+    def __init__(
+            self, 
+            payload: list[dict], 
+            file_hunt_path: str, 
+            run_id: str, 
+            config: configparser.ConfigParser, 
+            system_report: pd.DataFrame, 
+            load_results: list[LoadResult]
+        ) -> None:
         self.payload = payload
         self.file_hunt_path = file_hunt_path
         self.run_id = run_id

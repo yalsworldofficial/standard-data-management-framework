@@ -28,6 +28,7 @@ from sdmf.validation.validation_rules.ComprehensiveChecksDependencyDatasetCheck 
 from sdmf.validation.validation_rules.PartitionKeysCheck import PartitionKeysCheck
 from sdmf.validation.validation_rules.CompositeKeysCheck import CompositeKeysCheck
 from sdmf.validation.validation_rules.VacuumHoursCheck import VacuumHoursCheck
+from sdmf.exception.ValidationError import ValidationError
 
 
 class SystemLaunchValidator:
@@ -64,9 +65,16 @@ class SystemLaunchValidator:
         ]
 
     def run(self):
-        self.__init_rules()
-        validator = Validator(self.rules, fail_fast=True)
-        return validator.validate(self.context)
+        try:
+            self.__init_rules()
+            validator = Validator(self.rules, fail_fast=True)
+            return validator.validate(self.context)
+        except Exception as e:
+            raise ValidationError(
+                    "Something went wrong in system validation",
+                    rule_name="",
+                    original_exception=e
+                )
 
     def get_validated_master_specs(self) -> pd.DataFrame:
         opt_df = self.context.get_master_specs()

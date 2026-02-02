@@ -49,6 +49,12 @@ class Validator:
                 if self.fail_fast:
                     break
 
+                raise ValidationError(
+                    "Something went wrong in system validation",
+                    rule_name=rule.name,
+                    original_exception=e
+                )
+
         results_df = pd.DataFrame(rows)
 
         result = ValidationResult(

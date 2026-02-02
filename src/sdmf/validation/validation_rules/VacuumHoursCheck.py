@@ -16,7 +16,7 @@ class VacuumHoursCheck(ValidationRule):
         
         for json_dict in context.mdf_feed_specs_array:
 
-            if json_dict['data_flow_direction'] != 'EXTRACTION':
+            if json_dict['data_flow_direction'] != 'SOURCE_TO_BRONZE':
 
                 value = json_dict['feed_specs_dict'].get("vacuum_hours")
                 if not isinstance(value, int):
