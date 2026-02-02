@@ -84,8 +84,6 @@ class DataFlowDiagramGenerator():
     def __plot(self):
         fig, self.ax = plt.subplots(figsize=(80, max(10, len(self.validated_dataframe) * 2)))
         for fid, (x, y) in self.positions.items():
-
-            # 🔴 Root / first block styling
             if fid in self.roots:
                 facecolor = "#C0392B"   # red
                 text_color = "white"
