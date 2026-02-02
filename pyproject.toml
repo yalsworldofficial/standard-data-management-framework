@@ -15,7 +15,8 @@ authors = [
 
 dependencies = [
   "pandas",
-  "openpyxl"
+  "openpyxl",
+  "matplotlib"
 ]
 
 [tool.setuptools.packages.find]

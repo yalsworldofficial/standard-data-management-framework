@@ -32,12 +32,18 @@ class APIExtractorJSON(BaseLoadStrategy):
     def load(self) -> LoadResult:
         result_df = self.__extract()
         self.spark.sql(f"CREATE SCHEMA IF NOT EXISTS {self.__bronze_schema}")
-        feed_temp = f'{self.__bronze_schema}.t_{self.config.master_specs['feed_id']}_{self.config.master_specs['feed_name']}'
+        feed_temp = (
+            f"{self.__bronze_schema}.t_"
+            f"{self.config.master_specs['feed_id']}_"
+            f"{self.config.master_specs['feed_name']}"
+        )
+
         self.logger.info(f"Creating bronze table: {feed_temp}")
         self.config.feed_specs["source_table_name"] = feed_temp
         self.config.feed_specs["selection_query"] = None
         result_df = self._enforce_schema(result_df, StructType.fromJson(self.config.feed_specs['selection_schema']))
         result_df.printSchema()
+        print(result_df.count())
 
         (
             result_df.write.
@@ -108,6 +114,7 @@ class APIExtractorJSON(BaseLoadStrategy):
         """
         try:
             records = self.__fetch_all_pages()
+            print(len(records))
             schema = StructType.fromJson(self.config.feed_specs['selection_schema'])
             if not records:
                 df = self.spark.createDataFrame([], schema)
@@ -133,6 +140,9 @@ class APIExtractorJSON(BaseLoadStrategy):
             return self.__page_based_fetch(pagination)
         if pagination_type == "cursor":
             return self.__cursor_based_fetch(pagination)
+        if pagination_type == "offset_compound":
+            return self.__offset_compound_fetch(pagination)
+
         raise ValueError(f"Unsupported pagination type: {pagination_type}")
 
     def __page_based_fetch(self, pagination: dict) -> list[dict[str, Any]]:
@@ -261,3 +271,41 @@ class APIExtractorJSON(BaseLoadStrategy):
             sleep_time, attempt
         )
         time.sleep(sleep_time)
+
+    def __offset_compound_fetch(self, pagination: dict) -> list[dict]:
+        cfg = self.config.feed_specs["ingestion_config"]
+        results = []
+
+        page_size = pagination["page_size"]
+        offset = 0
+        max_pages = pagination.get("max_pages", 1000)
+        page_count = 0
+
+        while page_count < max_pages:
+            params = (cfg.get("params") or {}).copy()
+            params[pagination["limit_param"]] = f"{page_size},{offset}"
+            cfg["params"] = params
+
+            response = self.__fetch_response()
+            payload = response.json()
+
+            batch = self.__normalize_payload(payload)
+            if not batch:
+                break
+
+            results.extend(batch)
+
+            page_meta = payload.get(pagination["page_path"], {})
+            total = page_meta.get(pagination["total_path"])
+
+            fetched = len(batch)
+            offset += fetched
+            page_count += 1
+
+            # 🔒 HARD STOP conditions
+            if fetched < page_size:
+                break
+            if total is not None and offset >= total:
+                break
+
+        return results
