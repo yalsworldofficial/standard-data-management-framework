@@ -10,16 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # needed for GitHub Releases
+      contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # REQUIRED for tags
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Ensure version not already released
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "❌ Version $TAG already exists"
+            exit 1
+          fi
 
       - name: Install build tools
         run: |
@@ -35,15 +51,15 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: twine upload dist/*
 
-      - name: Extract version
-        id: version
+      - name: Extract changelog for this release
         run: |
-          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          VERSION=${{ steps.version.outputs.version }}
+          awk "/## \\[$VERSION\\]/{flag=1;next}/## \\[/{flag=0}flag" CHANGELOG.md > release_notes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
+          body_path: release_notes.md
           files: dist/*
