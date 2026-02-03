@@ -10,6 +10,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+---
+
+## [0.1.5] - 2026-02-04
+
+### Changed
+- Corrected release workflow to properly generate GitHub release notes.
+- Improved version validation to prevent duplicate releases.
+
+### Fixed
+- GitHub releases incorrectly using merge commit messages as release notes.
+
+---
+
+## [0.1.4] - 2026-02-04
+
+### Added
 - Validation for primary key consistency in SCD Type-2 tables.
 - Configurable retry logic for failed Delta Lake writes.
 - Optional strict mode for schema evolution checks.
@@ -22,12 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Incorrect handling of nullable fields during schema comparison.
 - Edge case where late-arriving records caused duplicate version rows.
 - Logging issue where validation warnings were silently ignored.
-
-### Deprecated
-- 
-
-### Removed
-- 
 
 ---
 
