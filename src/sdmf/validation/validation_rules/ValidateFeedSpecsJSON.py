@@ -21,6 +21,5 @@ class ValidateFeedSpecsJSON(ValidationRule):
         except json.JSONDecodeError as e:
             raise ValidationError(
                 message="Invalid JSON format, please make sure the JSON string provided is a valid JSON.",
-                original_exception=e,
-                rule_name=self.name,
+                original_exception=e
             )

@@ -16,13 +16,11 @@ class Validator:
 
     def validate(self, context: ValidationContext) -> ValidationResult:
         errors = []
-        passed = 0
         rows = []
 
         for idx, rule in enumerate(self.rules, start=1):
             try:
                 rule.validate(context)
-                passed += 1
 
                 self.logger.info(f"Rule {idx}: {rule.name} — PASSED")
 
@@ -33,11 +31,10 @@ class Validator:
                     "error_message": None
                 })
 
-            except ValidationError as e:
-                e.rule_name = rule.name
-                errors.append(e)
-
+            except Exception as e:
                 self.logger.error(f"Rule {idx}: {rule.name} — FAILED: {e}")
+
+                errors.append(e)
 
                 rows.append({
                     "rule_index": idx,
@@ -49,17 +46,11 @@ class Validator:
                 if self.fail_fast:
                     break
 
-                raise ValidationError(
-                    "Something went wrong in system validation",
-                    rule_name=rule.name,
-                    original_exception=e
-                )
-
         results_df = pd.DataFrame(rows)
 
         result = ValidationResult(
-            passed=len(errors) == 0,
-            passed_rules=passed,
+            passed=len(errors) == 0,              # ✅ ANY failure → False
+            passed_rules=len(rows) - len(errors), # number passed
             total_rules=len(self.rules),
             errors=errors,
             results_df=results_df
@@ -67,6 +58,7 @@ class Validator:
 
         self._log_summary(result)
         return result
+
 
 
     def _log_summary(self, result: ValidationResult):

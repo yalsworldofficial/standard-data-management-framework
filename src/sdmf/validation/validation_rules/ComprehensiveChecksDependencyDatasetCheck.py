@@ -11,8 +11,7 @@ class ComprehensiveChecksDependencyDatasetCheck(ValidationRule):
         if context.mdf_feed_specs_array is None:
             raise ValidationError(
                 message="JSON has not been parsed yet",
-                original_exception=None,
-                rule_name=self.name,
+                original_exception=None
             )
 
         for json_dict in context.mdf_feed_specs_array:
@@ -21,8 +20,7 @@ class ComprehensiveChecksDependencyDatasetCheck(ValidationRule):
                 if data is None:
                     raise ValidationError(
                         message=f"JSON has not been parsed yet for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name,
+                        original_exception=None
                     )
                 if "comprehensive_checks" not in data:
                     return
@@ -31,8 +29,7 @@ class ComprehensiveChecksDependencyDatasetCheck(ValidationRule):
                     if not isinstance(deps, list):
                         raise ValidationError(
                             f"comprehensive_checks[{idx}].dependency_dataset must be a list for feed id {json_dict['feed_id']}",
-                            original_exception=None,
-                            rule_name=self.name,
+                            original_exception=None
                         )
                     for dep in deps:
                         if not context.spark.catalog.tableExists(dep):
@@ -42,6 +39,5 @@ class ComprehensiveChecksDependencyDatasetCheck(ValidationRule):
                                     f"table does not exist: '{dep}'"
                                     f"for feed id {json_dict['feed_id']}"
                                 ),
-                                original_exception=None,
-                                rule_name=self.name,
+                                original_exception=None
                             )

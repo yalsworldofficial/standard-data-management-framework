@@ -72,7 +72,6 @@ class SystemLaunchValidator:
         except Exception as e:
             raise ValidationError(
                     "Something went wrong in system validation",
-                    rule_name="",
                     original_exception=e
                 )
 

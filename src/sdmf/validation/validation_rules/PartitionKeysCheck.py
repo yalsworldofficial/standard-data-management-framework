@@ -10,8 +10,7 @@ class PartitionKeysCheck(ValidationRule):
         if context.mdf_feed_specs_array is None:
             raise ValidationError(
                 message="JSON list has not been parsed yet",
-                original_exception=None,
-                rule_name=self.name
+                original_exception=None
             )
         
         for json_dict in context.mdf_feed_specs_array:
@@ -23,14 +22,12 @@ class PartitionKeysCheck(ValidationRule):
                 if "partition_keys" not in data:
                     raise ValidationError(
                         message=f"Missing 'partition_keys' for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name
+                        original_exception=None
                     )
                 if not isinstance(value, list):
                     raise ValidationError(
                         message=f"'partition_keys' must be an list for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name
+                        original_exception=None
                     )
 
                 table_name = data["source_table_name"]
@@ -40,13 +37,11 @@ class PartitionKeysCheck(ValidationRule):
                         if not isinstance(key, str):
                             raise ValidationError(
                                 message=f"'partition_keys' must contain only strings for feed id {json_dict['feed_id']}",
-                                original_exception=None,
-                                rule_name=self.name
+                                original_exception=None
                             )
                         if key not in table_columns:
                             raise ValidationError(
                                 message=f"'partition_keys' column '{key}' not found in table "
                                         f"'{data['source_table_name']}'  for feed id {json_dict['feed_id']}",
-                                original_exception=None,
-                                rule_name=self.name
+                                original_exception=None
                             )

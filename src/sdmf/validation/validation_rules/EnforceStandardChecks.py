@@ -11,8 +11,7 @@ class EnforceStandardChecks(ValidationRule):
         if context.mdf_feed_specs_array is None:
             raise ValidationError(
                 message="JSON has not been parsed yet",
-                original_exception=None,
-                rule_name=self.name,
+                original_exception=None
             )
 
         for json_dict in context.mdf_feed_specs_array:
@@ -21,19 +20,16 @@ class EnforceStandardChecks(ValidationRule):
                 if data is None:
                     raise ValidationError(
                         message=f"JSON has not been parsed yet for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name,
+                        original_exception=None
                     )
                 if "standard_checks" not in data:
                     raise ValidationError(
                         message=f"Missing 'checks' for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name,
+                        original_exception=None
                     )
 
                 if not isinstance(data["standard_checks"], list):
                     raise ValidationError(
                         message=f"'standard_checks' must be a list for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name,
+                        original_exception=None
                     )

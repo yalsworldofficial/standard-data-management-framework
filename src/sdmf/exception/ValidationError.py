@@ -1,9 +1,9 @@
 from sdmf.exception.BasePipelineException import BasePipelineException
 
 class ValidationError(BasePipelineException):
-    def __init__(self, message: str, rule_name: str, original_exception):
-        super().__init__(message)
-        self.message = message
-        self.rule_name = rule_name
-
-        self.original_exception = original_exception
+    def __init__(self, message=None, details=None, original_exception=None):
+        super().__init__(
+            message or "Extraction Error",
+            details=details,
+            original_exception=original_exception
+        )

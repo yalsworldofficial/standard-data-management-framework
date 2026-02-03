@@ -10,8 +10,7 @@ class ColumnExistsInSelection(ValidationRule):
         if context.mdf_feed_specs_array is None:
             raise ValidationError(
                 message="JSON has not been parsed yet",
-                original_exception=None,
-                rule_name=self.name,
+                original_exception=None
             )
 
         for json_dict in context.mdf_feed_specs_array:
@@ -20,21 +19,18 @@ class ColumnExistsInSelection(ValidationRule):
                 if "source_table_name" not in data:
                     raise ValidationError(
                         f"Missing 'source_table_name' for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name,
+                        original_exception=None
                     )
                 if "selection_schema" not in data:
                     raise ValidationError(
                         f"Missing 'selection_schema' for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name,
+                        original_exception=None
                     )
                 fields = data["selection_schema"].get("fields")
                 if not isinstance(fields, list):
                     raise ValidationError(
                         f"'selection_schema.fields' must be a list for feed id {json_dict['feed_id']}",
-                        original_exception=None,
-                        rule_name=self.name,
+                        original_exception=None
                     )
                 table_name = data["source_table_name"]
                 if context.spark.catalog.tableExists(table_name):
@@ -44,15 +40,13 @@ class ColumnExistsInSelection(ValidationRule):
                     except Exception as e:
                         raise ValidationError(
                             message=f"Unable to read schema for table '{table_name}' for feed id {json_dict['feed_id']}",
-                            original_exception=e,
-                            rule_name=self.name,
+                            original_exception=e
                         )
                     for idx, field in enumerate(fields):
                         if not isinstance(field, dict) or "name" not in field:
                             raise ValidationError(
                                 f"selection_schema.fields[{idx}] must contain 'name' for feed id {json_dict['feed_id']}",
-                                original_exception=None,
-                                rule_name=self.name,
+                                original_exception=None
                             )
                         column_name = field["name"]
                         if column_name not in table_columns:
@@ -62,6 +56,5 @@ class ColumnExistsInSelection(ValidationRule):
                                     f"not found in table '{table_name}'"
                                     f" for feed id {json_dict['feed_id']}"
                                 ),
-                                original_exception=None,
-                                rule_name=self.name,
+                                original_exception=None
                             )

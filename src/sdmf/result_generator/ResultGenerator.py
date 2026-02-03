@@ -142,7 +142,11 @@ class ResultGenerator():
         date_str = now.strftime("%Y%m%d")
         return os.path.join(output_directory, f"results_{self.run_id}_{date_str}_{int(time.time())}.xlsx")
 
-    
+    def __normalize_excel_value(self, v):
+        if isinstance(v, (list, tuple)):
+            return ", ".join(map(str, v))
+        return v
+
     def __generate_result_file(self):
         try:
             wb = Workbook()
@@ -155,7 +159,7 @@ class ResultGenerator():
                 df = sheet["df"]
                 ws.append(list(df.columns))
                 for row in df.itertuples(index=False, name=None):
-                    ws.append(row)
+                    ws.append([self.__normalize_excel_value(v) for v in row])
 
             self.save_path = self.__generate_file_name()
 
