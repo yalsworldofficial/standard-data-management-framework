@@ -20,6 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.6] - 2026-02-04
+
+### Changed
+- 
+
+### Fixed
+- Fixed pypi unverified issue
+
+---
+
 ## [0.1.5] - 2026-02-04
 
 ### Changed
