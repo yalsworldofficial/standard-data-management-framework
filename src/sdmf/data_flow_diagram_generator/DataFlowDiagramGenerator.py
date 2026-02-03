@@ -4,14 +4,12 @@ import logging
 import configparser
 from collections import defaultdict
 
-
 # external
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, FancyArrow
 import pandas as pd
 
 class DataFlowDiagramGenerator():
-
 
     def __init__(self, validated_dataframe: pd.DataFrame, config: configparser.ConfigParser, run_id: str) -> None:
         self.config = config
@@ -42,7 +40,6 @@ class DataFlowDiagramGenerator():
             self.__lineage_separators_and_lables()
             self.logger.info('Final cleanup and generate files...')
             self.__title_cleanup_and_save()
-        
 
     def __build_tree_structure(self):
         self.children = defaultdict(list)
@@ -84,26 +81,37 @@ class DataFlowDiagramGenerator():
     def __plot(self):
         fig, self.ax = plt.subplots(figsize=(80, max(10, len(self.validated_dataframe) * 2)))
         for fid, (x, y) in self.positions.items():
+            if fid in self.roots:
+                facecolor = "#C0392B"   # red
+                text_color = "white"
+            else:
+                facecolor = "#D6EAF8"   # default blue
+                text_color = "black"
+
             rect = Rectangle(
                 (x, y),
                 self.BOX_WIDTH,
                 self.BOX_HEIGHT,
                 edgecolor="black",
-                facecolor="#D6EAF8",
+                facecolor=facecolor,
                 linewidth=1.6
             )
             self.ax.add_patch(rect)
 
+            label = f"{fid}: {self.name_map[fid]}"
+
             self.ax.text(
                 x + self.BOX_WIDTH / 2,
                 y + self.BOX_HEIGHT / 2,
-                self.name_map[fid],
+                label,
                 ha="center",
                 va="center",
                 fontsize=20,
                 fontweight="bold",
+                color=text_color,
                 wrap=True
             )
+
         for _, r in self.validated_dataframe.iterrows():
             if r.parent_feed_id != 0:
                 px, py = self.positions[r.parent_feed_id]

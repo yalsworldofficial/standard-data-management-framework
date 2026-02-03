@@ -1,4 +1,5 @@
 # inbuilt
+import re
 import uuid
 import logging
 from abc import ABC, abstractmethod
@@ -27,49 +28,61 @@ class BaseLoadStrategy(ABC):
         self.spark = spark
         self.logger = logging.getLogger(__name__)
         if self.config.target_unity_catalog == "testing":
-            self._current_target_table_name = f"{self.config.target_schema_name}.{self.config.target_table_name}"
+            self._current_target_table_name = (
+                f"{self.config.target_schema_name}.{self.config.target_table_name}"
+            )
             self._staging_schema = f"staging"
         else:
             self._current_target_table_name = f"{self.config.target_unity_catalog}.{self.config.target_schema_name}.{self.config.target_table_name}"
             self._staging_schema = f"{self.config.target_unity_catalog}.staging"
 
-        self.logger.info(f"Current Table Name: {self._current_target_table_name}, Staging Schema: {self._staging_schema}")
+        self.logger.info(
+            f"Current Table Name: {self._current_target_table_name}, Staging Schema: {self._staging_schema}"
+        )
+
+    def _normalize_column_names(self, df: DataFrame) -> DataFrame:
+        for col in df.columns:
+            clean = col.strip().lower()
+
+            # replace anything not a–z, 0–9, _ with _
+            clean = re.sub(r"[^a-z0-9_]", "_", clean)
+
+            # collapse multiple underscores
+            clean = re.sub(r"_+", "_", clean)
+
+            # optional: remove leading/trailing underscores
+            clean = clean.strip("_")
+
+            if clean != col:
+                df = df.withColumnRenamed(col, clean)
+
+        return df
 
     def _enforce_schema(self, df: DataFrame, schema: StructType):
         return df.select(
             *[
-                F.col(f.name).cast(f.dataType).alias(f.name)
-                if f.name in df.columns
-                else F.lit(None).cast(f.dataType).alias(f.name)
+                (
+                    F.col(f.name).cast(f.dataType).alias(f.name)
+                    if f.name in df.columns
+                    else F.lit(None).cast(f.dataType).alias(f.name)
+                )
                 for f in schema.fields
             ]
         )
-
 
     def execute(self) -> LoadResult:
         """
         Orchestrates the load lifecycle:
         """
         try:
-            result = self._perform_load()
-            self.post_load_actions(result)
+            result = self.load()
             return result
         except Exception as e:
             raise DataLoadException(
                 message="Somethine went wrong while executing data load",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e
+                original_exception=e,
             )
-
-    def _perform_load(self) -> LoadResult:
-        """
-        Calls the subclass load implementation and ensures commit/rollback semantics.
-        No retries are performed here; any exception will bubble up to execute.
-        """
-        try:
-            return self.load()
-        except Exception as e:
-            return LoadResult(feed_id=self.config.master_specs['feed_id'], success=False)
 
     @abstractmethod
     def load(self) -> LoadResult:
@@ -78,13 +91,7 @@ class BaseLoadStrategy(ABC):
         Should return LoadResult on success.
         """
 
-    def post_load_actions(self, result: LoadResult) -> None:
-        """
-        Emit metrics, notifications, or cleanup.
-        Override to push metrics or alerts.
-        """
-
-    def get_max_table_version(self, table_path_or_name: str) -> int:
+    def __get_max_table_version(self, table_path_or_name: str) -> int:
         """
         Returns the latest version number of a Delta table.
 
@@ -118,7 +125,6 @@ class BaseLoadStrategy(ABC):
             f"{staging_schema}.t_incr_cdf_changes_{self.config.target_table_name}"
         )
 
-        
         self.logger.info(
             (
                 "\n=== Staging Layer Creation ===\n"
@@ -220,9 +226,9 @@ class BaseLoadStrategy(ABC):
                 writer = df.write.format("delta").mode("overwrite")
                 if partition_mismatch:
                     writer = writer.option("overwriteSchema", "true")
-                writer.partitionBy(*self.config.feed_specs["partition_keys"]).saveAsTable(
-                    full_table
-                )
+                writer.partitionBy(
+                    *self.config.feed_specs["partition_keys"]
+                ).saveAsTable(full_table)
                 if (
                     self.config.feed_specs["selection_query"] == ""
                     or self.config.feed_specs["selection_query"] == None
@@ -244,7 +250,9 @@ class BaseLoadStrategy(ABC):
                     df.withColumn("_x_operation", F.lit("insert"))
                     .withColumn(
                         "_x_commit_version",
-                        F.lit(self.get_max_table_version(full_table)).cast(LongType()),
+                        F.lit(self.__get_max_table_version(full_table)).cast(
+                            LongType()
+                        ),
                     )
                     .withColumn(
                         "_x_commit_timestamp",
@@ -263,8 +271,9 @@ class BaseLoadStrategy(ABC):
                     f"First load completed (FULL + INCR) | PARTION REBUILD: [{partition_mismatch}]"
                 )
                 return True
-            current_version = self.get_max_table_version(full_table)
-            df.createOrReplaceTempView("incoming_data")
+            current_version = self.__get_max_table_version(full_table)
+            inc_data = f"incoming_data_{self.config.master_specs["feed_id"]}"
+            df.createOrReplaceTempView(inc_data)
             primary_key = self.config.feed_specs.get("primary_key")
             composite_keys = self.config.feed_specs.get("composite_key", [])
             all_keys = [primary_key] if primary_key else []
@@ -284,7 +293,7 @@ class BaseLoadStrategy(ABC):
             MERGE INTO 
                 {full_table} AS tgt
             USING 
-                incoming_data AS src
+                {inc_data} AS src
             ON 
                 {merge_condition}
             WHEN MATCHED AND tgt._x_row_hash != src._x_row_hash THEN
@@ -298,7 +307,7 @@ class BaseLoadStrategy(ABC):
             """
             self.logger.info(merge_query)
             spark.sql(merge_query)
-            new_version = self.get_max_table_version(full_table)
+            new_version = self.__get_max_table_version(full_table)
             self.logger.info(
                 f"Current Version: [{current_version}], New Version after Merge: [{new_version}]"
             )
@@ -320,7 +329,7 @@ class BaseLoadStrategy(ABC):
                 .select("post.*")
                 .withColumn("_x_operation", F.lit("update"))
             )
-            
+
             true_inserts = cdf_df.filter("_change_type = 'insert'").withColumn(
                 "_x_operation", F.lit("insert")
             )
@@ -377,7 +386,7 @@ class BaseLoadStrategy(ABC):
             raise DataLoadException(
                 message=f"Error in staging layer for {self.config.feed_specs['source_table_name']}",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e
+                original_exception=e,
             )
 
     def _enforce_load_type_consistency(self) -> None:
@@ -408,7 +417,7 @@ class BaseLoadStrategy(ABC):
                                 f"Switching load types is not permitted."
                             ),
                             load_type=self.config.master_specs["load_type"],
-                            original_exception=None
+                            original_exception=None,
                         )
                     else:
                         self.logger.info(
@@ -430,5 +439,5 @@ class BaseLoadStrategy(ABC):
             raise DataLoadException(
                 message="Something went wrong while enforcing load type consistency",
                 load_type=self.config.master_specs["load_type"],
-                original_exception=e
+                original_exception=e,
             )

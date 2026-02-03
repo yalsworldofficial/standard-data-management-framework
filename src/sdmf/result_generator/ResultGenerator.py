@@ -18,7 +18,15 @@ from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
 class ResultGenerator():
 
-    def __init__(self, payload: list[dict], file_hunt_path: str, run_id: str, config: configparser.ConfigParser, system_report: pd.DataFrame, load_results: list[LoadResult]) -> None:
+    def __init__(
+            self, 
+            payload: list[dict], 
+            file_hunt_path: str, 
+            run_id: str, 
+            config: configparser.ConfigParser, 
+            system_report: pd.DataFrame, 
+            load_results: list[LoadResult]
+        ) -> None:
         self.payload = payload
         self.file_hunt_path = file_hunt_path
         self.run_id = run_id
@@ -52,7 +60,7 @@ class ResultGenerator():
         self.sheets.append(
             {
                 "sheet_name": "Load Report",
-                "df": pd.DataFrame([asdict(r) for r in load_results])
+                "df": pd.DataFrame([asdict(r) for r in load_results]).sort_values(by="feed_id")
             }
         )
 
@@ -73,7 +81,7 @@ class ResultGenerator():
         except Exception as e:
             raise ResultGenerationException(
                 "Something went wrong while running result generator.",
-                original_exception=e           
+                original_exception=e         
             )
 
     def __sheet_generator(self, df: pd.DataFrame, sheet_name: str):
@@ -92,7 +100,7 @@ class ResultGenerator():
         col = "feed_id"
         final_feed_status_df.insert(0, col, final_feed_status_df.pop(col))
         final_feed_status_df = final_feed_status_df.sort_values(by=col)
-        self.__sheet_generator(final_feed_status_df, "Feed Status")
+        self.__sheet_generator(final_feed_status_df, "Feed Status (B-G)")
 
     def __generate_standard_results(self):
         df = pd.DataFrame(self.standard_results)
@@ -108,17 +116,19 @@ class ResultGenerator():
         self.__sheet_generator(df, "Standard Check Result")
 
     def __generate_comprehensive_results(self):
-        df = pd.DataFrame(self.comprehensive_results)
-        df = df.explode("comprehensive_results").reset_index(drop=True)
-        df = pd.concat(
-            [
-                df.drop(columns=["comprehensive_results"]),
-                df["comprehensive_results"].apply(pd.Series),
-            ],
-            axis=1,
-        )
-        df.insert(0, "check_number", range(1, len(df) + 1))
-        self.__sheet_generator(df, "Comprehensive Check Result")
+        if len(self.comprehensive_results) != 0:
+            df = pd.DataFrame(self.comprehensive_results)
+            df = df.explode("comprehensive_results").reset_index(drop=True)
+            df = pd.concat(
+                [
+                    df.drop(columns=["comprehensive_results"]),
+                    df["comprehensive_results"].apply(pd.Series),
+                ],
+                axis=1,
+            )
+            df.insert(0, "check_number", range(1, len(df) + 1))
+            self.__sheet_generator(df, "Comprehensive Check Result")
+
     
     def __generate_dashboard(self):
         final_feed_status_df = pd.DataFrame(self.final_feed_status)
@@ -134,7 +144,11 @@ class ResultGenerator():
         date_str = now.strftime("%Y%m%d")
         return os.path.join(output_directory, f"results_{self.run_id}_{date_str}_{int(time.time())}.xlsx")
 
-    
+    def __normalize_excel_value(self, v):
+        if isinstance(v, (list, tuple)):
+            return ", ".join(map(str, v))
+        return v
+
     def __generate_result_file(self):
         try:
             wb = Workbook()
@@ -143,11 +157,12 @@ class ResultGenerator():
                 wb.remove(default_sheet)
 
             for sheet in self.sheets:
-                ws = wb.create_sheet(title=sheet["sheet_name"][:31])
                 df = sheet["df"]
+
+                ws = wb.create_sheet(title=sheet["sheet_name"][:31])
                 ws.append(list(df.columns))
                 for row in df.itertuples(index=False, name=None):
-                    ws.append(row)
+                    ws.append([self.__normalize_excel_value(v) for v in row])
 
             self.save_path = self.__generate_file_name()
 

@@ -25,12 +25,21 @@ spark = (
     .getOrCreate()
 )
 
-
 # spark.sql(
 #     f"ALTER TABLE demo.customers SET TBLPROPERTIES ('data.load_type' = 'test')"
 # )
 # spark.sql("describe history demo.customers").show()
 
 
+# spark.sql('select * from bronze.t_iso_language_codes').show()
+# spark.sql('describe table  bronze.t_iso_language_codes').show()
+# spark.sql('describe history  bronze.t_iso_language_codes').show()
+# spark.sql('select count(*) from bronze.t_iso_language_codes').show()
 
-spark.sql('select * from demo.t_country_codes limit 100').show()
+
+# spark.sql('select * from bronze.t_country_codes').show()
+# spark.sql('describe table  bronze.t_country_codes').show()
+# spark.sql('describe history  bronze.t_country_codes').show()
+# spark.sql('select count(*) from bronze.t_country_codes').show()
+
+

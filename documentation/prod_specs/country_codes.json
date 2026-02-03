@@ -1,0 +1,110 @@
+{
+    "primary_key": "iso2_code",
+    "composite_key": ["iso2_code", "iso3_code", "onu_code"],
+    "partition_keys": [],
+    "vacuum_hours": 168,
+    "source_table_name": "bronze.t_country_codes_raw",
+    "selection_query": null,
+    "selection_schema": {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "official_lang_code",
+                "type": "string",
+                "nullable": false,
+                "metadata": {}
+            },
+            {
+                "name": "iso2_code",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "iso3_code",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "onu_code",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "is_ilomember",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "is_receiving_quest",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "label_en",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "label_fr",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "label_sp",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "geo_shape",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "geo_point_2d",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            }
+        ]
+    },
+    "standard_checks": [
+        {
+            "check_sequence": [
+                "_check_primary_key"
+            ],
+            "column_name": "iso2_code",
+            "threshold": 0
+        },
+        {
+            "check_sequence": [
+                "_check_duplicates", "_check_nulls"
+            ],
+            "column_name": "iso3_code",
+            "threshold": 0
+        },
+        {
+            "check_sequence": [
+                "_check_duplicates", "_check_nulls"
+            ],
+            "column_name": "onu_code",
+            "threshold": 0
+        },
+        {
+            "check_sequence": [
+                "_check_composite_key"
+            ],
+            "column_name": ["iso2_code", "iso3_code", "onu_code"],
+            "threshold": 0
+        }
+    ],
+    "comprehensive_checks": []
+}

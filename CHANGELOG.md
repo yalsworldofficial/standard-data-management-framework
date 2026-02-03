@@ -9,21 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
-
 - This is our first release (Test)
-
-### Fixed
-
-- This is our first release (Test)
-
-### Added
-- 
 
 ### Changed
 - 
 
 ### Fixed
-- 
+- This is our first release (Test)
 
 ### Deprecated
 - 

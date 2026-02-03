@@ -237,15 +237,13 @@ Note: **This library is tested on databricks.**
 
 ```python
 import configparser
+from sdmf import Orchestrator
 
 spark # available spark session
 
 cfg = configparser.ConfigParser()
 cfg.read("/sdmf_dir/config.ini")
-myOrchestrator = Orchestrator(
-- spark,
-- config=cfg
-)
+myOrchestrator = Orchestrator(spark, config=cfg)
 myOrchestrator.run()
 ```
 
