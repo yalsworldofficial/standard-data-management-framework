@@ -41,7 +41,6 @@ class Orchestrator:
             file_hunt_path=self.file_hunt_path, spark=self.spark, config=self.config
         )
         validation_result = my_SystemLaunchValidator.run()
-        
         self.validated_master_specs_df = (
             my_SystemLaunchValidator.get_validated_master_specs()
         )
@@ -129,7 +128,8 @@ class Orchestrator:
                 allowed_df=allowed_df, spark=self.spark, config=self.config
             )
             my_DataLoadController.run()
-            load_results = my_DataLoadController.get_load_results()
+            res2 = my_DataLoadController.get_load_results()
+            load_results.extend(res2)
             obj.adhoc_post_load()
             all_feed_manifest = obj._finalize()
             my_ResultGenerator = ResultGenerator(

@@ -272,7 +272,8 @@ class BaseLoadStrategy(ABC):
                 )
                 return True
             current_version = self.__get_max_table_version(full_table)
-            df.createOrReplaceTempView("incoming_data")
+            inc_data = f"incoming_data_{self.config.master_specs["feed_id"]}"
+            df.createOrReplaceTempView(inc_data)
             primary_key = self.config.feed_specs.get("primary_key")
             composite_keys = self.config.feed_specs.get("composite_key", [])
             all_keys = [primary_key] if primary_key else []
@@ -292,7 +293,7 @@ class BaseLoadStrategy(ABC):
             MERGE INTO 
                 {full_table} AS tgt
             USING 
-                incoming_data AS src
+                {inc_data} AS src
             ON 
                 {merge_condition}
             WHEN MATCHED AND tgt._x_row_hash != src._x_row_hash THEN

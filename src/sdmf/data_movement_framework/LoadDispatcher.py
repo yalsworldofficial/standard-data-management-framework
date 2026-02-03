@@ -75,7 +75,7 @@ class LoadDispatcher():
         load_result.total_human_readable_time = self.__format_duration(end_time - start_time)
         load_result.exception_if_any = exception_if_any
         load_result.source_table_path = self.master_spec.get('source_unity_catalog', '')
-        load_result.target_table_path = self.master_spec.get('target_table_name', '')
+        load_result.target_table_path = f"{self.master_spec.get('target_unity_catalog', '')}.{self.master_spec.get('target_schema_name', '')}.{self.master_spec.get('target_table_name', '')}"
         load_result.data_flow_direction = self.master_spec.get('data_flow_direction', '')
         return load_result
 
