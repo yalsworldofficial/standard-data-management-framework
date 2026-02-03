@@ -162,7 +162,6 @@ class SCDType2(BaseLoadStrategy):
             )
         except Exception as e:
             raise DataLoadException(
-                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
                 message=f"Error during SCD_TYPE_2 for {self._current_target_table_name}: {str(e)}"           
             )

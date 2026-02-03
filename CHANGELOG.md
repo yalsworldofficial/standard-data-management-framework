@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.7] - 2026-02-04
+
+### Added
+- Added all project related URL's in pyproject.toml
+
+### Changed
+- Removed unused exception classes and made the error statements more readable.
+
+### Fixed
+- 
+
+---
+
 ## [0.1.6] - 2026-02-04
 
 ### Changed

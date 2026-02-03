@@ -71,7 +71,6 @@ class AppendLoad(BaseLoadStrategy):
 
         except Exception as e:
             raise DataLoadException(
-                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
                 message=f"Error during APPEND_LOAD for {self._current_target_table_name}: {str(e)}"           
             )

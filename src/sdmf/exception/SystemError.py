@@ -1,6 +1,6 @@
-from sdmf.exception.BasePipelineException import BasePipelineException
+from sdmf.exception.BaseException import BaseException
 
-class SystemError(BasePipelineException):
+class SystemError(BaseException):
     def __init__(self, message=None, details=None, original_exception=None):
         super().__init__(
             message or "System Error",

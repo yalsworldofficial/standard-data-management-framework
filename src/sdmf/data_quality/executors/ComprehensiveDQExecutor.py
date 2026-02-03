@@ -2,7 +2,7 @@
 import logging
 
 # internal
-from sdmf.exception.DataQualityError import DataQualityError
+from sdmf.exception.DataQualityException import DataQualityException
 
 
 class ComprehensiveDQExecutor:
@@ -24,7 +24,7 @@ class ComprehensiveDQExecutor:
             dependency_ds = check.get("dependency_dataset", [])
             for dds in dependency_ds:
                 if self.spark.catalog.tableExists(dds) == False:
-                    raise DataQualityError
+                    raise DataQualityException
             query = check.get("query")
             severity = check.get("severity", "").upper()
             threshold = check.get("threshold", 0)

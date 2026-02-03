@@ -16,10 +16,6 @@ authors = [
 
 classifiers = [
   "License :: OSI Approved :: Apache Software License",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Operating System :: OS Independent",
   "Development Status :: 3 - Alpha",
@@ -28,11 +24,19 @@ classifiers = [
 dependencies = [
   "pandas",
   "openpyxl",
-  "matplotlib"
+  "matplotlib",
+  "delta-spark",
+  "numpy"
 ]
 
 [project.urls]
+Homepage = "https://github.com/yalsworldofficial/standard-data-management-framework"
+Repository = "https://github.com/yalsworldofficial/standard-data-management-framework"
+Documentation = "https://github.com/yalsworldofficial/standard-data-management-framework#readme"
+Changelog = "https://github.com/yalsworldofficial/standard-data-management-framework/blob/main/CHANGELOG.md"
+Issues = "https://github.com/yalsworldofficial/standard-data-management-framework/issues"
 License = "https://github.com/yalsworldofficial/standard-data-management-framework/blob/main/LICENSE"
+
 
 [tool.setuptools.packages.find]
 where = ["src"]

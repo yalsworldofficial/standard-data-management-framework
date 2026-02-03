@@ -1,8 +1,9 @@
-from sdmf.exception.BasePipelineException import BasePipelineException
+from sdmf.exception.BaseException import BaseException
 
-class DataLoadException(BasePipelineException):
-    def __init__(self, message: str, load_type: str, original_exception):
-        super().__init__(message)
-        self.message = message
-        self.load_type = load_type
-        self.original_exception = original_exception
+class DataLoadException(BaseException):
+    def __init__(self, message=None, details=None, original_exception=None):
+        super().__init__(
+            message or "Data Load Exception",
+            details=details,
+            original_exception=original_exception
+        )
