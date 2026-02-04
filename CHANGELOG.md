@@ -20,6 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.7] - 2026-02-04
+
+### Added
+- Added all project related URL's in pyproject.toml
+- Added Storage Fetch Feature to pick up files directly from any storage.
+    - Added support for medallion and standard storage
+    - Added support for both multi/single file.
+    - Currently supported formats; `*.xml`, `*.json`, `*.parquet`
+    - Implemented schema enforcement.
+
+### Changed
+- Removed unused exception classes and made the error statements more readable.
+
+### Fixed
+- Fixed some exception classes which were not showing error messages correctly.
+
+---
+
 ## [0.1.6] - 2026-02-04
 
 ### Changed

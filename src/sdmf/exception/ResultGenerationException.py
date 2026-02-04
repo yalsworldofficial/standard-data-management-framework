@@ -1,8 +1,9 @@
-from sdmf.exception.BasePipelineException import BasePipelineException
+from sdmf.exception.BaseException import BaseException
 
-class ResultGenerationException(BasePipelineException):
-    def __init__(self, message: str,original_exception, details=None):
-        super().__init__(message)
-        self.message = message
-        self.details = details
-        self.original_exception = original_exception
+class ResultGenerationException(BaseException):
+    def __init__(self, message=None, details=None, original_exception=None):
+        super().__init__(
+            message or "Result Generation Exception",
+            details=details,
+            original_exception=original_exception
+        )

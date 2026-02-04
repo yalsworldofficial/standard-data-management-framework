@@ -8,9 +8,13 @@ spark = (
     SparkSession.builder
     .appName("sdmf")
     .enableHiveSupport()
+    .config("spark.scheduler.mode", "FAIR")
     .config(
         "spark.jars.packages",
-        "io.delta:delta-spark_2.12:3.1.0"
+        ",".join([
+            "io.delta:delta-spark_2.12:3.1.0",
+            "com.databricks:spark-xml_2.12:0.17.0"
+        ])
     )
     .config(
         "spark.sql.extensions",
@@ -42,4 +46,7 @@ spark = (
 # spark.sql('describe history  bronze.t_country_codes').show()
 # spark.sql('select count(*) from bronze.t_country_codes').show()
 
+
+
+spark.sql('select * from bronze.t_test2').show(truncate=False)
 

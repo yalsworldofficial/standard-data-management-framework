@@ -80,7 +80,6 @@ class BaseLoadStrategy(ABC):
         except Exception as e:
             raise DataLoadException(
                 message="Somethine went wrong while executing data load",
-                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
             )
 
@@ -385,7 +384,6 @@ class BaseLoadStrategy(ABC):
         except Exception as e:
             raise DataLoadException(
                 message=f"Error in staging layer for {self.config.feed_specs['source_table_name']}",
-                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
             )
 
@@ -416,7 +414,6 @@ class BaseLoadStrategy(ABC):
                                 f"Attempted: '{current_type}'. "
                                 f"Switching load types is not permitted."
                             ),
-                            load_type=self.config.master_specs["load_type"],
                             original_exception=None,
                         )
                     else:
@@ -438,6 +435,5 @@ class BaseLoadStrategy(ABC):
         except Exception as e:
             raise DataLoadException(
                 message="Something went wrong while enforcing load type consistency",
-                load_type=self.config.master_specs["load_type"],
                 original_exception=e,
             )

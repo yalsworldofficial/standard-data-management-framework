@@ -12,6 +12,7 @@ from sdmf.data_movement_framework.load_types.AppendLoad import AppendLoad
 from sdmf.data_movement_framework.load_types.IncrementalCDC import IncrementalCDC
 from sdmf.data_movement_framework.load_types.SCDType2 import SCDType2
 from sdmf.data_movement_framework.load_types.APIExtractor import APIExtractor
+from sdmf.data_movement_framework.load_types.StorageFetch import StorageFetch
 from sdmf.data_movement_framework.data_class.LoadConfig import LoadConfig
 from sdmf.data_movement_framework.data_class.LoadResult import LoadResult
 
@@ -56,7 +57,8 @@ class LoadDispatcher():
             "SCD_TYPE_2": SCDType2,
 
             # extraction
-            "API_EXTRACTOR": APIExtractor
+            "API_EXTRACTOR": APIExtractor,
+            "STORAGE_FETCH":StorageFetch
         }
 
         load_class = load_type_map.get(self.master_spec.get('load_type', ""))

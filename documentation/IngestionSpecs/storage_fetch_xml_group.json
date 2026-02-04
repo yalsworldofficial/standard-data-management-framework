@@ -1,0 +1,62 @@
+{
+    "vacuum_hours": 168,
+    "partition_keys": [],
+    "selection_schema": {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "_index",
+                "type": "long",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "_name",
+                "type": "string",
+                "nullable": true,
+                "metadata": {}
+            },
+            {
+                "name": "aya",
+                "type": {
+                    "type": "array",
+                    "containsNull": true,
+                    "elementType": {
+                        "type": "struct",
+                        "fields": [
+                            {
+                                "name": "_VALUE",
+                                "type": "string",
+                                "nullable": true,
+                                "metadata": {}
+                            },
+                            {
+                                "name": "_index",
+                                "type": "long",
+                                "nullable": true,
+                                "metadata": {}
+                            },
+                            {
+                                "name": "_text",
+                                "type": "string",
+                                "nullable": true,
+                                "metadata": {}
+                            }
+                        ]
+                    }
+                },
+                "nullable": true,
+                "metadata": {}
+            }
+        ]
+    },
+    "storage_config": {
+        "file_type": "xml",
+        "lookup_directory": "/home/hando/dev/standard-data-management-framework/storage/xml_group",
+        "storage_type": "STANDARD",
+        "xml_row_tag": "sura",
+        "is_multi_file": true,
+        "inside_timestamp_dir": null,
+        "file_name": null
+    }
+}

@@ -81,6 +81,5 @@ class FullLoad(BaseLoadStrategy):
         except Exception as e:
             raise DataLoadException(
                 message=f"Feed ID: {self.config.master_specs['feed_id']}, Error during FULL LOAD for {self._current_target_table_name}: {str(e)}",
-                load_type=self.config.master_specs["load_type"],
                 original_exception=e
             )

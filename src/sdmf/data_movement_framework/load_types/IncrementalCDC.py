@@ -134,7 +134,6 @@ class IncrementalCDC(BaseLoadStrategy):
             target_df = delta_target.toDF()
             if target_df.columns != incr_df.columns:
                 raise DataLoadException(
-                    load_type=self.config.feed_specs["load_type"],
                     original_exception=None,
                     message=f"Target table {target_table} schema [{target_df.columns}] does not match incremental data schema [{incr_df.columns}]."
                 )
@@ -191,7 +190,6 @@ class IncrementalCDC(BaseLoadStrategy):
             )
         except Exception as e:
             raise DataLoadException(
-                load_type=self.config.feed_specs["load_type"],
                 original_exception=e,
                 message=f"Error during Incremental CDC load for {self._current_target_table_name}: {str(e)}"           
             )
