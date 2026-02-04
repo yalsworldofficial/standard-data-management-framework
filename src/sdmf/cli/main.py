@@ -10,7 +10,10 @@ spark = (
     .config("spark.scheduler.mode", "FAIR")
     .config(
         "spark.jars.packages",
-        "io.delta:delta-spark_2.12:3.1.0"
+        ",".join([
+            "io.delta:delta-spark_2.12:3.1.0",
+            "com.databricks:spark-xml_2.12:0.17.0"
+        ])
     )
     .config(
         "spark.sql.extensions",
